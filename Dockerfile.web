@@ -1,0 +1,14 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+COPY web/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY web/ .
+
+# Expose port 8000 for the Flask app
+EXPOSE 8000
+
+# Start the Flask application on port 8000
+CMD ["python", "-c", "import os; os.environ['FLASK_APP'] = 'web.py'; from web import app; app.run(host='0.0.0.0', port=8000, debug=False)"] 
