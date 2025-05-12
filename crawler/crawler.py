@@ -5,26 +5,23 @@ import time
 from bs4 import BeautifulSoup
 import logging
 
-# Set up logging
+# Thiết lập logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Constants
+# Các hằng số
 BASE_URL = "https://www.fahasa.com/sach-trong-nuoc/van-hoc-trong-nuoc.html"
 OUTPUT_DIR = "/app/data"
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "fahasa_data.json")
-MAX_PAGES = 5  # Limit to 5 pages for faster testing
+MAX_PAGES = 5  # Giới hạn 5 trang để test nhanh hơn
 
 def get_page(url):
-    """Fetch a page from Fahasa with retry logic."""
+    """Lấy nội dung trang từ Fahasa với cơ chế thử lại."""
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Cache-Control": "max-age=0"
+        "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Connection": "keep-alive"
     }
     
     retry_count = 0
@@ -33,59 +30,57 @@ def get_page(url):
     while retry_count < max_retries:
         try:
             response = requests.get(url, headers=headers, timeout=15)
+            response.encoding = 'utf-8'  # Đảm bảo encoding đúng cho tiếng Việt
             response.raise_for_status()
             return response.text
         except requests.exceptions.RequestException as e:
             retry_count += 1
-            logger.warning(f"Request failed ({retry_count}/{max_retries}): {e}")
-            time.sleep(2)  # Wait before retrying
+            logger.warning(f"Yêu cầu thất bại ({retry_count}/{max_retries}): {e}")
+            time.sleep(2)  # Đợi trước khi thử lại
     
-    logger.error(f"Failed to fetch {url} after {max_retries} attempts")
+    logger.error(f"Không thể tải {url} sau {max_retries} lần thử")
     return None
 
 def parse_books(html):
-    """Parse HTML to extract book details from Fahasa website."""
+    """Phân tích HTML để trích xuất thông tin sách từ website Fahasa."""
     soup = BeautifulSoup(html, 'lxml')
     books = []
     
-    # Log the HTML structure to debug
-    logger.info("Analyzing page structure...")
+    logger.info("Đang phân tích cấu trúc trang...")
     
-    # Find the products container
+    # Tìm container chứa sản phẩm
     products_container = soup.select_one("ul#products_grid.products-grid")
     if not products_container:
-        logger.warning("Could not find products grid container")
+        logger.warning("Không tìm thấy khung chứa sản phẩm")
         return books
     
-    # Find all book items (li elements that are direct children of the products grid)
+    # Tìm tất cả các mục sách (thẻ li là con trực tiếp của products grid)
     book_elements = products_container.find_all("li", recursive=False)
     
-    logger.info(f"Found {len(book_elements)} book elements on page")
+    logger.info(f"Đã tìm thấy {len(book_elements)} sách trên trang")
     
     for book in book_elements:
         try:
-            # Extract title
-            title_element = book.select_one("h2.product-name-no-ellipsis a")
+            # Trích xuất tiêu đề
+            title_element = book.select_one("h2.product-name-no-ellipsis a") or book.select_one("a.product-image")
+                
             if not title_element:
-                # Try alternative selector
-                title_element = book.select_one("a.product-image")
-                
-            if title_element:
-                # Get the title text, cleaning up any extra elements
-                title = title_element.get_text(strip=True)
-                # Remove trending icon text if present
-                if title_element.select_one("img.label-tagname"):
-                    title = ' '.join(title.split()[1:])
-                
-                # Get book URL
-                book_url = title_element.get('href', '')
-                if not book_url.startswith('http'):
-                    book_url = f"https://www.fahasa.com{book_url}" if book_url.startswith('/') else f"https://www.fahasa.com/{book_url}"
-            else:
-                logger.warning("Could not find title element, skipping book")
-                continue  # Skip if no title
+                logger.warning("Không tìm thấy tiêu đề, bỏ qua sách này")
+                continue
             
-            # Extract price
+            # Lấy text tiêu đề, làm sạch các phần tử phụ
+            title = title_element.get_text(strip=True)
+            
+            # Lấy URL sách
+            book_url = title_element.get('href', '')
+            if book_url and not book_url.startswith('http'):
+                book_url = f"https://www.fahasa.com{book_url}" if book_url.startswith('/') else f"https://www.fahasa.com/{book_url}"
+            
+            # Trích xuất tác giả
+            author_element = book.select_one("div.product-author span")
+            author = author_element.get_text(strip=True) if author_element else None
+            
+            # Trích xuất giá
             special_price_element = book.select_one("p.special-price span.price")
             if special_price_element:
                 price = special_price_element.get_text(strip=True)
@@ -93,161 +88,134 @@ def parse_books(html):
                 price_element = book.select_one("span.price")
                 price = price_element.get_text(strip=True) if price_element else "N/A"
             
-            # Extract original price
+            # Trích xuất giá gốc
             old_price_element = book.select_one("p.old-price span.price")
             old_price = old_price_element.get_text(strip=True) if old_price_element else None
             
-            # Extract discount percentage
+            # Trích xuất phần trăm giảm giá
             discount_element = book.select_one("span.discount-percent")
             discount = discount_element.get_text(strip=True) if discount_element else None
             
-            # Extract rating
-            rating_element = book.select_one("div.rating")
-            if rating_element and rating_element.has_attr('style'):
-                # Extract percentage from style="width:XX%"
-                rating_style = rating_element['style']
-                rating_percentage = rating_style.split(':')[1].strip().rstrip('%')
-                rating = float(rating_percentage) / 20  # Convert percentage to 5-star scale
-            else:
-                rating_text_element = book.select_one("div.rating-links")
-                rating = float(rating_text_element.get_text(strip=True)) if rating_text_element and rating_text_element.get_text(strip=True) != '0' else 0
-            
-            # Extract image URL
+            # Trích xuất URL hình ảnh
             img_element = book.select_one("span.product-image img.lazyload")
             img_url = None
             if img_element:
-                # Try different attributes for image
-                if img_element.has_attr('data-src'):
-                    img_url = img_element['data-src']
-                elif img_element.has_attr('src'):
-                    img_url = img_element['src']
+                img_url = img_element.get('data-src') or img_element.get('src')
             
-            # Build book data
+            # Xây dựng dữ liệu sách
             book_data = {
                 "title": title,
+                "author": author,
                 "price": price,
                 "original_price": old_price,
                 "discount": discount,
-                "rating": rating,
                 "url": book_url,
                 "image_url": img_url
             }
             
             books.append(book_data)
-            logger.debug(f"Extracted book: {title}")
             
         except Exception as e:
-            logger.warning(f"Error parsing book: {e}")
+            logger.warning(f"Lỗi khi phân tích sách: {e}")
     
     return books
 
 def get_next_page_url(html, current_url):
-    """Extract the URL for the next page."""
+    """Trích xuất URL cho trang tiếp theo."""
     soup = BeautifulSoup(html, 'lxml')
     
-    # Look for the pagination section
+    # Tìm phần phân trang
     pagination = soup.select_one("div.pages")
     if not pagination:
         return None
     
-    # Find the next button
+    # Tìm nút next
     next_page_link = soup.find("a", onclick=lambda x: x and "catalog_ajax.Page_change('next')" in x)
     if next_page_link:
-        # Get current page number from various possible sources
+        # Lấy số trang hiện tại từ các nguồn có thể
         current_page_element = soup.select_one("li.current a")
         if current_page_element:
             try:
                 current_page = int(current_page_element.get_text(strip=True))
                 next_page = current_page + 1
                 
-                # Construct next page URL
+                # Tạo URL trang tiếp theo
                 base_url = current_url.split('?')[0] if '?' in current_url else current_url
-                # Check if URL ends with .html
                 if not base_url.endswith('.html'):
                     base_url = f"{base_url}.html"
                 return f"{base_url}?p={next_page}"
             except (ValueError, TypeError) as e:
-                logger.warning(f"Error parsing pagination: {e}")
+                logger.warning(f"Lỗi phân tích phân trang: {e}")
                 return None
     
     return None
 
 def crawl_fahasa():
-    """Main crawler function to fetch books from Fahasa."""
+    """Hàm crawler chính để lấy sách từ Fahasa."""
     all_books = []
     url = BASE_URL
     page_count = 0
     
-    logger.info("Starting Fahasa crawler")
+    logger.info("Bắt đầu crawler Fahasa")
     
     while url and page_count < MAX_PAGES:
-        logger.info(f"Crawling page {page_count + 1}: {url}")
+        logger.info(f"Đang crawl trang {page_count + 1}: {url}")
         html = get_page(url)
-        
         if not html:
-            logger.error(f"Failed to get page {page_count + 1}")
+            logger.error(f"Không thể lấy trang {page_count + 1}")
             break
         
-        # Save the HTML for debugging if needed
-        if page_count == 0:
-            debug_file = os.path.join(OUTPUT_DIR, "debug_page.html")
-            with open(debug_file, 'w', encoding='utf-8') as f:
-                f.write(html)
-            logger.info(f"Saved first page HTML to {debug_file} for debugging")
-        
         books = parse_books(html)
-        logger.info(f"Found {len(books)} books on page {page_count + 1}")
+        logger.info(f"Đã tìm thấy {len(books)} sách trên trang {page_count + 1}")
         all_books.extend(books)
         
-        # Get next page URL
+        # Lấy URL trang tiếp theo
         next_url = get_next_page_url(html, url)
         if next_url:
             url = next_url
             page_count += 1
-            # Politeness delay
+            # Delay lịch sự
             time.sleep(2)
         else:
-            # If we can't determine the next page URL, try to construct it
+            # Nếu không xác định được URL trang tiếp theo, thử tạo URL
             if "?p=" in url:
                 current_page = int(url.split("?p=")[1])
                 next_page = current_page + 1
                 url = url.split("?p=")[0] + f"?p={next_page}"
                 page_count += 1
-                # Politeness delay
                 time.sleep(2)
             else:
                 url = url + "?p=2"
                 page_count += 1
-                # Politeness delay
                 time.sleep(2)
     
-    logger.info(f"Crawling complete. Total books: {len(all_books)}")
+    logger.info(f"Hoàn tất crawl. Tổng số sách: {len(all_books)}")
     return all_books
 
 def save_to_json(data, filename):
-    """Save data to JSON file."""
-    # Ensure directory exists
+    """Lưu dữ liệu vào file JSON."""
+    # Đảm bảo thư mục tồn tại
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     
-    logger.info(f"Data saved to {filename}")
+    logger.info(f"Đã lưu dữ liệu vào {filename}")
 
 def main():
     try:
-        # Wait for a few seconds to ensure network is available
+        # Đợi vài giây để đảm bảo mạng khả dụng
         time.sleep(5)
         
-        # Crawl book data
+        # Crawl dữ liệu sách
         books = crawl_fahasa()
         
-        # Save to JSON
+        # Lưu vào JSON
         save_to_json(books, OUTPUT_FILE)
         
-        logger.info("Crawler finished successfully")
+        logger.info("Crawler hoàn thành thành công")
     except Exception as e:
-        logger.error(f"Crawler failed: {e}")
+        logger.error(f"Crawler thất bại: {e}")
 
 if __name__ == "__main__":
     main() 

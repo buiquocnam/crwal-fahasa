@@ -19,13 +19,14 @@ Hệ thống bao gồm các thành phần sau:
 
 1. **Crawler** thu thập dữ liệu từ Fahasa.com:
    - Truy cập URL: `https://www.fahasa.com/sach-trong-nuoc/van-hoc-trong-nuoc.html`
-   - Thu thập thông tin sách: tên, giá, tác giả, URL ảnh
+   - Thu thập thông tin sách: tên, tác giả, giá, giá gốc, phần trăm giảm giá, URL sách, URL ảnh
    - Lưu dữ liệu vào file JSON trong thư mục `/data`
 
 2. **Ingestion** xử lý dữ liệu:
    - Đợi Crawler thu thập dữ liệu xong
    - Đọc dữ liệu từ file JSON
    - Tạo schema trong PostgreSQL nếu chưa tồn tại
+   - Chuẩn hóa dữ liệu trước khi nhập
    - Nhập dữ liệu vào bảng `books`
 
 3. **API** (FastAPI) cung cấp endpoints:
@@ -40,9 +41,8 @@ Hệ thống bao gồm các thành phần sau:
    - Hỗ trợ phân trang kết quả
 
 5. **Nginx** làm API Gateway:
-   - Điều hướng request đến API service qua URL `/api/*`
    - Proxy trực tiếp đến endpoint `/books/*`
-   - Cung cấp giao diện web thông qua URL gốc `/`
+   - Chuyển tiếp tất cả các request khác đến API service
 
 ## Quy trình khởi chạy
 
@@ -52,7 +52,7 @@ Khi khởi động bằng `docker-compose up`, các container sẽ khởi độn
 2. **Crawler** bắt đầu thu thập dữ liệu (đợi PostgreSQL healthy)
 3. **Ingestion** đợi Crawler hoàn thành và đưa dữ liệu vào PostgreSQL
 4. **API** khởi động (đợi PostgreSQL healthy)
-5. **Web UI** khởi động (đợi API sẵn sàng)
+5. **Web UI** khởi động (đợi API sẵn sàng, tùy cấu hình)
 6. **Nginx** làm API Gateway (đợi API sẵn sàng)
 
 ## Luồng dữ liệu
@@ -68,20 +68,46 @@ Fahasa Website -> Crawler -> JSON Files -> Ingestion -> PostgreSQL -> API -> [Ng
 3. Chạy lệnh: `docker-compose up --build`
 4. Đợi tất cả các container khởi động hoàn tất
 
-## Cách truy cập API và Web
+## Cách truy cập API
 
 ### API Endpoints:
-- API (qua Nginx): `http://localhost:8000/api/books`
-- API (trực tiếp qua Nginx): `http://localhost:8000/books`
-- API (trực tiếp tới container): `http://localhost:8001/books`
-- Các tham số:
-  - Lấy sách phân trang: `/books?limit=10&offset=20`
-  - Tìm kiếm theo tiêu đề: `/books/search/title?keyword=kim&limit=10`
-  - Tìm kiếm theo tác giả: `/books/search/author?keyword=nguyen&limit=10`
+- API qua Nginx (proxy): `http://localhost:8080/books/`
+- API trực tiếp tới container: `http://localhost:8001/books`
 
-### Web UI:
-- Web UI (qua Nginx): `http://localhost:8000/`
-- Web UI (trực tiếp): `http://localhost:8002/`
+### Các tham số truy vấn:
+- Lấy sách phân trang: `/books?limit=10&offset=20`
+- Tìm kiếm theo tiêu đề: `/books/search/title?keyword=kim&limit=10`
+- Tìm kiếm theo tác giả: `/books/search/author?keyword=nguyen&limit=10`
+
+### Ví dụ các API call:
+1. Lấy 10 sách đầu tiên:
+   ```
+   GET http://localhost:8080/books/?limit=10&offset=0
+   ```
+
+2. Lấy chi tiết sách có ID=1:
+   ```
+   GET http://localhost:8080/books/1
+   ```
+
+3. Tìm kiếm sách có tiêu đề chứa từ "kim":
+   ```
+   GET http://localhost:8080/books/search/title?keyword=kim&limit=10&offset=0
+   ```
+
+4. Tìm kiếm sách của tác giả có tên chứa "nguyen":
+   ```
+   GET http://localhost:8080/books/search/author?keyword=nguyen&limit=10&offset=0
+   ```
+
+## Tài liệu chi tiết các thành phần
+
+Mỗi thành phần của hệ thống đều có tài liệu riêng mô tả chi tiết:
+
+- **Crawler**: [crawler/README.md](crawler/README.md) - Mô tả quy trình thu thập dữ liệu
+- **Ingestion**: [ingestion/README.md](ingestion/README.md) - Mô tả quy trình nhập dữ liệu vào PostgreSQL
+- **API**: [api/README.md](api/README.md) - Mô tả các endpoints và cách sử dụng API
+- **Nginx**: [nginx.conf.README.md](nginx.conf.README.md) - Mô tả cấu hình và vai trò của Nginx
 
 ## Cấu trúc dự án
 
@@ -89,9 +115,11 @@ Fahasa Website -> Crawler -> JSON Files -> Ingestion -> PostgreSQL -> API -> [Ng
 fahasa_crawler/
 ├── crawler/                 # Mã nguồn crawler
 │   ├── crawler.py           # Script crawl dữ liệu
+│   ├── README.md            # Tài liệu mô tả crawler
 │   └── requirements.txt     # Thư viện Python cần thiết
 ├── ingestion/               # Mã nguồn ingestion
 │   ├── ingestion.py         # Script nhập dữ liệu vào PostgreSQL
+│   ├── README.md            # Tài liệu mô tả ingestion
 │   └── requirements.txt     # Thư viện Python cần thiết
 ├── api/                     # Mã nguồn API
 │   ├── config.py            # Cấu hình và hằng số
@@ -99,6 +127,7 @@ fahasa_crawler/
 │   ├── main.py              # Entry point của FastAPI app
 │   ├── models.py            # Pydantic models
 │   ├── books.py             # Routers và endpoints
+│   ├── README.md            # Tài liệu mô tả API
 │   └── requirements.txt     # Thư viện Python cần thiết  
 ├── web/                     # Mã nguồn Web UI
 │   ├── web.py               # Flask application
@@ -112,6 +141,7 @@ fahasa_crawler/
 ├── Dockerfile.web           # Dockerfile cho web UI
 ├── docker-compose.yml       # Cấu hình Docker Compose
 ├── nginx.conf               # Cấu hình Nginx API Gateway
+├── nginx.conf.README.md     # Tài liệu mô tả Nginx
 └── README.md                # File này
 ```
 
@@ -127,3 +157,13 @@ Nếu gặp lỗi 500 khi truy cập qua Nginx:
 Nếu API không thể kết nối đến PostgreSQL:
 - Kiểm tra logs PostgreSQL: `docker-compose logs -f postgres`
 - Thử kết nối trực tiếp: `docker exec -it fahasa_postgres psql -U fahasa -d fahasa_db`
+
+### Lỗi 404 khi truy cập API
+- Đảm bảo URL đúng định dạng (để ý dấu `/` ở cuối URL)
+- Kiểm tra cấu hình Nginx trong file nginx.conf
+- Kiểm tra logs để tìm nguyên nhân: `docker-compose logs -f nginx`
+
+### Lỗi kết nối từ Web đến API
+- Kiểm tra biến `API_URL` trong file web.py
+- Đảm bảo tất cả services kết nối đến cùng mạng Docker 
+- Xem logs của web: `docker-compose logs -f web`
