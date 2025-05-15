@@ -27,6 +27,7 @@ services:
     container_name: fahasa_crawler
     volumes:
       - ./data:/app/data
+      - ./crawler:/app/crawler
     networks:
       fahasa_network:
         aliases:
@@ -71,6 +72,7 @@ services:
     container_name: fahasa_ingestion
     volumes:
       - ./data:/app/data
+      - ./ingestion:/app/ingestion
     networks:
       fahasa_network:
         aliases:

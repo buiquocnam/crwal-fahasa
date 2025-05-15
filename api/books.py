@@ -84,7 +84,8 @@ async def create_book(book: BookCreate = Body(...), db: Session = Depends(get_db
             cover_type=book.cover_type,
             url=book.url,
             description=book.description,
-            category=book.category
+            category=book.category,
+            language=book.language
         )
         
         db.add(db_book)
@@ -126,7 +127,8 @@ async def create_books_batch(books: List[BookCreate] = Body(...), db: Session = 
                     cover_type=book.cover_type,
                     url=book.url,
                     description=book.description,
-                    category=book.category
+                    category=book.category,
+                    language=book.language
                 )
                 
                 db.add(db_book)

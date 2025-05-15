@@ -3,7 +3,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 import logging
-from contextlib import contextmanager
 
 # Thiết lập logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -57,6 +56,7 @@ class BookDB(Base):
     url = Column(String)
     description = Column(String)
     category = Column(String)
+    language = Column(String)
 
 def create_tables():
     """Tạo bảng nếu chưa tồn tại."""

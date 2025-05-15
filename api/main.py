@@ -72,3 +72,9 @@ async def general_exception_handler(request, exc):
         status_code=500,
         content={"detail": "Đã xảy ra lỗi không xác định."}
     )
+
+
+
+# Chạy ứng dụng nếu là file chính
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000) 

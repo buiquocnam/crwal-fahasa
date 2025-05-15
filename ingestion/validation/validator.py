@@ -1,0 +1,81 @@
+from ingestion.config.settings import VIETNAMESE_PATTERN, logger
+from ingestion.validation.schema import BOOK_SCHEMA
+from ingestion.validation.mappings import KEY_MAPPING
+
+def validate_book(book, index=None):
+    """
+    Kiểm tra tính hợp lệ của dữ liệu sách.
+    
+    Args:
+        book: Thông tin sách cần kiểm tra
+        index: Chỉ số hoặc ID để hiển thị trong log
+        
+    Returns:
+        bool: True nếu dữ liệu hợp lệ, False nếu không
+    """
+    book_id = index if index is not None else book.get('id', 'Unknown')
+    
+    # Kiểm tra các trường bắt buộc
+    for field in BOOK_SCHEMA["required"]:
+        if field not in book or book[field] is None or book[field] == "":
+            logger.error(f"Sách {book_id}: Thiếu trường bắt buộc '{field}'")
+            return False
+    
+    # Kiểm tra kiểu dữ liệu
+    for field, field_type in BOOK_SCHEMA["types"].items():
+        if field in book and book[field] is not None:
+            if not isinstance(book[field], field_type):
+                logger.error(f"Sách {book_id}: Trường '{field}' có kiểu dữ liệu không hợp lệ, mong đợi {field_type.__name__}")
+                return False
+    
+    # Các kiểm tra tùy chỉnh
+    if "url" in book and book["url"]:
+        if not book["url"].startswith("http"):
+            logger.warning(f"Sách {book_id}: URL không bắt đầu bằng http: {book['url']}")
+    
+    # Dữ liệu tiếng Việt
+    if "title" in book and book["title"]:
+        # Kiểm tra xem có ký tự tiếng Việt không (có dấu)
+        if VIETNAMESE_PATTERN.search(book["title"]) and not isinstance(book["title"], str):
+            logger.warning(f"Sách {book_id}: Tiêu đề có thể chứa ký tự tiếng Việt nhưng không phải chuỗi Unicode")
+    
+    return True
+
+def clean_book_data(book):
+    """
+    Làm sạch và chuẩn hóa dữ liệu sách.
+    
+    Args:
+        book: Dữ liệu sách cần làm sạch
+        
+    Returns:
+        dict: Dữ liệu sách đã được làm sạch
+    """
+    cleaned_book = {}
+    
+    # Duyệt qua tất cả các trường trong dữ liệu gốc
+    for field, value in book.items():
+        # Chuẩn hóa tên trường (lowercase và gạch dưới thay cho khoảng trắng)
+        normalized_field = field.lower().replace(" ", "_")
+        
+        # Áp dụng mapping trực tiếp nếu có
+        if normalized_field in KEY_MAPPING:
+            target_field = KEY_MAPPING[normalized_field]
+            cleaned_book[target_field] = value
+    
+    # Giữ lại các trường có trong schema dữ liệu
+    valid_fields = BOOK_SCHEMA["required"] + BOOK_SCHEMA["optional"]
+    for field in valid_fields:
+        if field in book:
+            cleaned_book[field] = book[field]
+    
+    # Xử lý tiêu đề
+    if "title" in cleaned_book:
+        cleaned_book["title"] = cleaned_book["title"].strip()
+    
+    # Xử lý URL
+    if "url" in cleaned_book and cleaned_book["url"]:
+        if not cleaned_book["url"].startswith("http"):
+            cleaned_book["url"] = "https://" + cleaned_book["url"].lstrip(":/")
+    
+    return cleaned_book 

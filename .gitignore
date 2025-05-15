@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Environment and IDE
+.env
+.venv
+env/
+venv/
+ENV/
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# Docker
+.dockerignore
+
+# System files
+.DS_Store
+Thumbs.db 

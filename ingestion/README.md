@@ -1,90 +1,62 @@
-# Ingestion Service
+# Fahasa Ingestion Service
 
-Ingestion Service là thành phần quan trọng trong kiến trúc hệ thống, chịu trách nhiệm đọc dữ liệu từ các file JSON được tạo bởi Crawler và chuyển dữ liệu này vào hệ thống cơ sở dữ liệu thông qua Database API.
+Dịch vụ này nhận dữ liệu được crawl từ website Fahasa và nhập vào cơ sở dữ liệu PostgreSQL thông qua API.
 
-## Kiến trúc
+## Cấu trúc mã nguồn
 
-Dựa theo sơ đồ kiến trúc hệ thống, Ingestion Service có các tương tác sau:
+```
+ingestion/
+├── __init__.py             # Package initialization
+├── config/                 # Cấu hình và thiết lập
+│   ├── __init__.py
+│   └── settings.py         # Các hằng số và cấu hình
+├── validation/             # Logic kiểm tra dữ liệu
+│   ├── __init__.py
+│   ├── schema.py           # Định nghĩa schema dữ liệu
+│   └── validator.py        # Hàm xác thực và chuẩn hóa dữ liệu
+├── utils/                  # Tiện ích hỗ trợ
+│   ├── __init__.py
+│   ├── api_client.py       # Tương tác với API
+│   └── data_loader.py      # Tải dữ liệu từ file JSON
+└── main.py                 # Điểm vào chính của ứng dụng
+```
 
-1. **Nhận dữ liệu từ Landing Zone**: Ingestion Service đọc các file JSON được lưu trữ trong Landing Zone (được tạo bởi Crawler).
+## Quy trình làm việc
 
-2. **Gửi dữ liệu đến Database API**: Sau khi xử lý dữ liệu từ JSON, Ingestion Service gửi dữ liệu này đến Database API để lưu trữ trong cơ sở dữ liệu.
+1. Dịch vụ khởi động và đợi các file dữ liệu từ crawler
+2. Đọc dữ liệu từ file JSON (ưu tiên file tổng hợp)
+3. Xác thực và chuẩn hóa dữ liệu
+4. Gửi dữ liệu tới API để lưu vào cơ sở dữ liệu
 
-3. **Không kết nối trực tiếp đến Database**: Ingestion Service không tương tác trực tiếp với cơ sở dữ liệu mà phải thông qua Database API.
+## Các Module
 
-## Quy trình hoạt động
+### Config
 
-1. **Khởi động và chuẩn bị**:
-   - Đợi các dịch vụ phụ thuộc khởi động (Database API)
-   - Kiểm tra kết nối đến Database API
+- **settings.py**: Chứa các cấu hình hệ thống như đường dẫn, URL, biểu thức chính quy, và thiết lập logger.
 
-2. **Tìm kiếm file dữ liệu**:
-   - Đợi đến khi các file JSON từ Crawler sẵn sàng trong Landing Zone
-   - Ưu tiên file tổng hợp nếu có, nếu không thì xử lý từng file theo danh mục
+### Validation
 
-3. **Đọc và xử lý dữ liệu**:
-   - Đọc dữ liệu từ các file JSON
-   - Xác thực và chuẩn hóa dữ liệu nếu cần
+- **schema.py**: Định nghĩa cấu trúc dữ liệu sách (trường bắt buộc, tùy chọn, kiểu dữ liệu) và ánh xạ giữa các trường.
+- **validator.py**: Cung cấp các hàm để kiểm tra tính hợp lệ và làm sạch dữ liệu sách.
 
-4. **Gửi dữ liệu đến Database API**:
-   - Kiểm tra xem đã có dữ liệu trong database chưa (thông qua Database API)
-   - Nếu chưa có, gửi dữ liệu đến Database API để lưu trữ
-   - Sử dụng phương thức phù hợp (POST/PATCH) để gửi dữ liệu
+### Utils
 
-5. **Xử lý lỗi và ghi log**:
-   - Ghi log toàn bộ quá trình
-   - Xử lý lỗi kết nối và lỗi dữ liệu
-   - Cung cấp thông tin về số lượng bản ghi đã xử lý thành công/thất bại
+- **data_loader.py**: Xử lý việc đọc dữ liệu từ file JSON và quản lý các file dữ liệu.
+- **api_client.py**: Xử lý giao tiếp với API, hỗ trợ nhập dữ liệu theo lô hoặc từng cuốn.
 
-## Cấu hình
+### Main
 
-Ingestion Service sử dụng các biến môi trường hoặc tệp cấu hình để xác định:
-
-- Đường dẫn đến thư mục chứa file JSON (DATA_DIR)
-- Tên file tổng hợp (COMBINED_DATA_FILE)
-- URL của Database API (API_BASE_URL)
-- Cấu hình timeout và retry cho các yêu cầu API
+- **main.py**: Điều phối toàn bộ quy trình ingestion, từ việc đợi dữ liệu, đọc file, và xử lý đến khi nhập vào database.
 
 ## Xử lý lỗi
 
-Ingestion Service được thiết kế để xử lý các tình huống lỗi sau:
+Hệ thống có một cơ chế xử lý lỗi mạnh mẽ với nhiều cấp độ:
 
-- Database API không khả dụng
-- Định dạng file JSON không hợp lệ
-- Dữ liệu thiếu hoặc không đúng định dạng
-- Lỗi kết nối mạng
-- Lỗi xác thực hoặc phân quyền
-
-Ingestion Service sẽ ghi log chi tiết các lỗi và cố gắng tiếp tục xử lý các bản ghi khác nếu có thể.
-
-## Điểm đặc biệt
-
-- **Cơ chế Idempotent**: Có thể chạy nhiều lần mà không tạo ra dữ liệu trùng lặp
-- **Tự động chuẩn hóa**: Đảm bảo dữ liệu sạch trước khi nhập vào database
-- **Xử lý lỗi mạnh mẽ**: Có cơ chế thử lại và xử lý ngoại lệ
-- **Ghi log chi tiết**: Theo dõi toàn bộ quá trình xử lý
-- **Phối hợp với Crawler**: Đợi dữ liệu từ crawler trước khi xử lý
-
-## Các tham số có thể tùy chỉnh
-
-- `DATA_FILE`: Đường dẫn đến file JSON chứa dữ liệu sách
-- `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`: Thông tin kết nối PostgreSQL
-- `MAX_RETRIES`: Số lần thử lại kết nối tối đa
-- `RETRY_DELAY`: Thời gian chờ giữa các lần thử lại (giây)
-
-## Cách chạy Ingestion
-
-1. Cài đặt các thư viện cần thiết:
-   ```
-   pip install -r requirements.txt
-   ```
-
-2. Đảm bảo PostgreSQL đã được khởi động và có thể kết nối
-
-3. Chạy ingestion:
-   ```
-   python ingestion.py
-   ```
+1. Xử lý lỗi khi đọc file JSON
+2. Xác thực và loại bỏ dữ liệu không hợp lệ
+3. Thử sử dụng API batch trước (hiệu suất cao)
+4. Chuyển sang nhập từng cuốn nếu batch thất bại
+5. Ghi log chi tiết ở mỗi bước
 
 ## Cách chạy trong Docker
 

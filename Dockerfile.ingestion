@@ -13,9 +13,11 @@ RUN apt-get update && \
 COPY ingestion/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ingestion/ .
+COPY ingestion/ ./ingestion/
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
+# Tat tao file .pyc va thu muc __pycache__
+ENV PYTHONDONTWRITEBYTECODE=1
 
-CMD ["python", "ingestion.py"] 
+CMD ["python", "-m", "ingestion.main"] 

@@ -22,6 +22,7 @@ class Book(BaseModel):
     url: Optional[str]
     description: Optional[str]
     category: Optional[str]
+    language: Optional[str]
     
     class Config:
         orm_mode = True
@@ -45,6 +46,7 @@ class BookCreate(BaseModel):
     url: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
+    language: Optional[str] = None
     
     class Config:
         orm_mode = True
