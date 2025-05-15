@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException, Query, Depends
-from typing import Dict, Any, Optional
-import psycopg2
-from database import get_db
-from models import Book, BookList, SearchResult
+from fastapi import APIRouter, HTTPException, Query, Depends, Body
+from typing import Dict, Any, Optional, List
+from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_
+from database import get_db, BookDB
+from models import Book, BookList, SearchResult, BookCreate, BatchBookResult
 from config import DEFAULT_LIMIT, MAX_LIMIT, logger
 
 router = APIRouter(
@@ -16,37 +17,31 @@ async def get_books(
     limit: int = Query(DEFAULT_LIMIT, description="Số lượng sách trả về", ge=1, le=MAX_LIMIT),
     offset: int = Query(0, description="Số lượng sách bỏ qua", ge=0),
     title: Optional[str] = Query(None, description="Lọc theo tiêu đề"),
-    conn = Depends(get_db)
+    category: Optional[str] = Query(None, description="Lọc theo danh mục"),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
-    """Lấy tất cả sách với phân trang và lọc theo tiêu đề (nếu có)."""
+    """Lấy tất cả sách với phân trang và lọc theo tiêu đề, danh mục (nếu có)."""
     try:
-        with conn.cursor() as cursor:
-            # Xây dựng câu truy vấn dựa trên tham số lọc
-            query = "SELECT * FROM books"
-            count_query = "SELECT COUNT(*) FROM books"
-            params = []
+        # Xây dựng query
+        query = db.query(BookDB)
+        
+        if title:
+            query = query.filter(BookDB.title.ilike(f"%{title}%"))
             
-            if title:
-                query += " WHERE title ILIKE %s"
-                count_query += " WHERE title ILIKE %s"
-                params.append(f"%{title}%")
-                
-            query += " ORDER BY id LIMIT %s OFFSET %s"
-            params.extend([limit, offset])
-            
-            # Thực thi truy vấn
-            cursor.execute(query, params)
-            books = cursor.fetchall()
-            
-            # Lấy tổng số sách
-            cursor.execute(count_query, params[:-2] if params else [])
-            total = cursor.fetchone()["count"]
+        if category:
+            query = query.filter(BookDB.category == category)
+        
+        # Lấy tổng số sách
+        total = query.count()
+        
+        # Thực hiện phân trang
+        books = query.order_by(BookDB.id).offset(offset).limit(limit).all()
         
         return {
             "total": total,
             "limit": limit,
             "offset": offset,
-            "books": list(books)
+            "books": books
         }
     
     except Exception as e:
@@ -54,57 +49,139 @@ async def get_books(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{book_id}", response_model=Book)
-async def get_book(book_id: int, conn = Depends(get_db)) -> Dict[str, Any]:
+async def get_book(book_id: int, db: Session = Depends(get_db)) -> Dict[str, Any]:
     """Lấy sách cụ thể theo ID."""
     try:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                "SELECT * FROM books WHERE id = %s",
-                (book_id,)
-            )
-            book = cursor.fetchone()
+        book = db.query(BookDB).filter(BookDB.id == book_id).first()
         
         if not book:
             raise HTTPException(status_code=404, detail=f"Không tìm thấy sách với ID {book_id}")
         
         return book
     
-    except psycopg2.Error as e:
-        logger.error(f"Lỗi cơ sở dữ liệu khi lấy sách {book_id}: {e}")
+    except Exception as e:
+        logger.error(f"Lỗi khi lấy sách {book_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/", response_model=Book, status_code=201)
+async def create_book(book: BookCreate = Body(...), db: Session = Depends(get_db)):
+    """Thêm một cuốn sách mới vào database."""
+    try:
+        db_book = BookDB(
+            title=book.title,
+            price=book.price,
+            original_price=book.original_price,
+            discount=book.discount,
+            image_url=book.image_url,
+            product_code=book.product_code,
+            supplier=book.supplier,
+            author=book.author,
+            publisher=book.publisher,
+            publish_year=book.publish_year,
+            weight=book.weight,
+            dimensions=book.dimensions,
+            page_count=book.page_count,
+            cover_type=book.cover_type,
+            url=book.url,
+            description=book.description,
+            category=book.category
+        )
+        
+        db.add(db_book)
+        db.commit()
+        db.refresh(db_book)
+        
+        logger.info(f"Đã thêm sách mới: {book.title}")
+        return db_book
+            
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Lỗi khi thêm sách mới: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/batch", response_model=BatchBookResult, status_code=201)
+async def create_books_batch(books: List[BookCreate] = Body(...), db: Session = Depends(get_db)):
+    """Thêm nhiều cuốn sách vào database cùng lúc."""
+    success_count = 0
+    failed_count = 0
+    failed_books = []
+
+    try:
+        for book in books:
+            try:
+                db_book = BookDB(
+                    title=book.title,
+                    price=book.price,
+                    original_price=book.original_price,
+                    discount=book.discount,
+                    image_url=book.image_url,
+                    product_code=book.product_code,
+                    supplier=book.supplier,
+                    author=book.author,
+                    publisher=book.publisher,
+                    publish_year=book.publish_year,
+                    weight=book.weight,
+                    dimensions=book.dimensions,
+                    page_count=book.page_count,
+                    cover_type=book.cover_type,
+                    url=book.url,
+                    description=book.description,
+                    category=book.category
+                )
+                
+                db.add(db_book)
+                success_count += 1
+            except Exception as e:
+                failed_count += 1
+                failed_books.append({"title": book.title, "error": str(e)})
+                logger.error(f"Lỗi khi thêm sách '{book.title}': {e}")
+        
+        # Chỉ commit khi có sách thành công
+        if success_count > 0:
+            db.commit()
+            
+        logger.info(f"Đã thêm {success_count}/{len(books)} sách thành công")
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Lỗi khi thêm nhiều sách: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    return {
+        "total": len(books),
+        "success_count": success_count,
+        "failed_count": failed_count,
+        "failed_items": failed_books
+    }
 
 @router.get("/search/title", response_model=SearchResult)
 async def search_books_by_title(
     keyword: str = Query(..., description="Từ khóa tìm kiếm trong tiêu đề sách"),
     limit: int = Query(DEFAULT_LIMIT, description="Số lượng sách trả về", ge=1, le=MAX_LIMIT),
     offset: int = Query(0, description="Số lượng sách bỏ qua", ge=0),
-    conn = Depends(get_db)
+    category: Optional[str] = Query(None, description="Lọc kết quả theo danh mục"),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Tìm kiếm sách theo từ khóa trong tiêu đề."""
     try:
-        with conn.cursor() as cursor:
-            search_pattern = f"%{keyword}%"
-            
-            # Lấy sách phù hợp
-            cursor.execute(
-                "SELECT * FROM books WHERE title ILIKE %s ORDER BY id LIMIT %s OFFSET %s",
-                (search_pattern, limit, offset)
-            )
-            books = cursor.fetchall()
-            
-            # Lấy tổng số kết quả phù hợp
-            cursor.execute(
-                "SELECT COUNT(*) FROM books WHERE title ILIKE %s",
-                (search_pattern,)
-            )
-            total = cursor.fetchone()["count"]
+        # Xây dựng query
+        query = db.query(BookDB).filter(BookDB.title.ilike(f"%{keyword}%"))
+        
+        if category:
+            query = query.filter(BookDB.category == category)
+        
+        # Lấy tổng số kết quả
+        total = query.count()
+        
+        # Lấy sách phù hợp với phân trang
+        books = query.order_by(BookDB.id).offset(offset).limit(limit).all()
         
         return {
             "keyword": keyword,
             "total": total,
             "limit": limit,
             "offset": offset,
-            "books": list(books)
+            "books": books
         }
     
     except Exception as e:
@@ -116,35 +193,61 @@ async def search_books_by_author(
     keyword: str = Query(..., description="Từ khóa tìm kiếm trong tên tác giả"),
     limit: int = Query(DEFAULT_LIMIT, description="Số lượng sách trả về", ge=1, le=MAX_LIMIT),
     offset: int = Query(0, description="Số lượng sách bỏ qua", ge=0),
-    conn = Depends(get_db)
+    category: Optional[str] = Query(None, description="Lọc kết quả theo danh mục"),
+    db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Tìm kiếm sách theo từ khóa trong tên tác giả."""
     try:
-        with conn.cursor() as cursor:
-            search_pattern = f"%{keyword}%"
-            
-            # Lấy sách phù hợp
-            cursor.execute(
-                "SELECT * FROM books WHERE author ILIKE %s ORDER BY id LIMIT %s OFFSET %s",
-                (search_pattern, limit, offset)
-            )
-            books = cursor.fetchall()
-            
-            # Lấy tổng số kết quả phù hợp
-            cursor.execute(
-                "SELECT COUNT(*) FROM books WHERE author ILIKE %s",
-                (search_pattern,)
-            )
-            total = cursor.fetchone()["count"]
+        # Xây dựng query
+        query = db.query(BookDB).filter(BookDB.author.ilike(f"%{keyword}%"))
+        
+        if category:
+            query = query.filter(BookDB.category == category)
+        
+        # Lấy tổng số kết quả
+        total = query.count()
+        
+        # Lấy sách phù hợp với phân trang
+        books = query.order_by(BookDB.id).offset(offset).limit(limit).all()
         
         return {
             "keyword": keyword,
             "total": total,
             "limit": limit,
             "offset": offset,
-            "books": list(books)
+            "books": books
         }
     
     except Exception as e:
         logger.error(f"Lỗi khi tìm kiếm sách với tác giả '{keyword}': {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/search/category", response_model=BookList)
+async def search_books_by_category(
+    category: str = Query(..., description="Danh mục sách cần tìm"),
+    limit: int = Query(DEFAULT_LIMIT, description="Số lượng sách trả về", ge=1, le=MAX_LIMIT),
+    offset: int = Query(0, description="Số lượng sách bỏ qua", ge=0),
+    db: Session = Depends(get_db)
+) -> Dict[str, Any]:
+    """Tìm kiếm sách theo danh mục."""
+    try:
+        # Xây dựng query
+        query = db.query(BookDB).filter(BookDB.category == category)
+        
+        # Lấy tổng số kết quả
+        total = query.count()
+        
+        # Lấy sách phù hợp với phân trang
+        books = query.order_by(BookDB.id).offset(offset).limit(limit).all()
+        
+        return {
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "books": books
+        }
+    
+    except Exception as e:
+        logger.error(f"Lỗi khi tìm kiếm sách theo danh mục '{category}': {e}")
         raise HTTPException(status_code=500, detail=str(e)) 
+    

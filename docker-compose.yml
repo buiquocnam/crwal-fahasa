@@ -30,27 +30,11 @@ services:
     networks:
       fahasa_network:
         aliases:
-          - fahasa_crawler
+          - crawler
     depends_on:
       postgres:
         condition: service_healthy
-
-  ingestion:
-    build:
-      context: .
-      dockerfile: Dockerfile.ingestion
-    container_name: fahasa_ingestion
-    volumes:
-      - ./data:/app/data
-    networks:
-      fahasa_network:
-        aliases:
-          - fahasa_ingestion
-    depends_on:
-      postgres:
-        condition: service_healthy
-      crawler:
-        condition: service_completed_successfully
+    restart: on-failure
 
   api:
     build:
@@ -62,12 +46,49 @@ services:
     networks:
       fahasa_network:
         aliases:
-          - fahasa_api
+          - api
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       - PYTHONUNBUFFERED=1
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=fahasa_db
+      - DB_USER=fahasa
+      - DB_PASS=fahasa123
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile.ingestion
+    container_name: fahasa_ingestion
+    volumes:
+      - ./data:/app/data
+    networks:
+      fahasa_network:
+        aliases:
+          - ingestion
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=fahasa_db
+      - DB_USER=fahasa
+      - DB_PASS=fahasa123
+    depends_on:
+      postgres:
+        condition: service_healthy
+      crawler:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+    restart: on-failure
 
   # Temporarily disabled web service
   # web:
@@ -94,9 +115,11 @@ services:
     networks:
       fahasa_network:
         aliases:
-          - fahasa_nginx
+          - nginx
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    restart: on-failure
 
 networks:
   fahasa_network:

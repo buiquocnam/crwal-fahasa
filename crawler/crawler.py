@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://www.fahasa.com/sach-trong-nuoc/van-hoc-trong-nuoc.html"
 OUTPUT_DIR = "/app/data"
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "fahasa_data.json")
-MAX_PAGES = 5  # Giới hạn 5 trang để test nhanh hơn
+MAX_PAGES = 1  # Giới hạn 5 trang để test nhanh hơn
 
 def get_page(url):
     """Lấy nội dung trang từ Fahasa với cơ chế thử lại."""
@@ -41,6 +41,98 @@ def get_page(url):
     logger.error(f"Không thể tải {url} sau {max_retries} lần thử")
     return None
 
+def get_book_details(book_url):
+    """Truy cập trang chi tiết sách và lấy thông tin."""
+    logger.info(f"Lấy thông tin chi tiết từ: {book_url}")
+    
+    html = get_page(book_url)
+    if not html:
+        logger.error(f"Không thể tải trang chi tiết sách: {book_url}")
+        return None
+        
+    soup = BeautifulSoup(html, 'lxml')
+    details = {}
+    
+    try:
+        # Lấy tiêu đề sách
+        title_element = soup.select_one("div.product-essential h1") 
+        if title_element:
+            details["title"] = title_element.get_text(strip=True)
+            # logger.info(f"Tiêu đề: {details['title']}")
+        
+        # Lấy mô tả sách
+        description_element = soup.select_one("div.std")
+        if description_element:
+            details["description"] = description_element.get_text(strip=True)
+            # logger.info(f"Mô tả: {details['description'][:50]}...")
+        
+        # Lấy giá bán
+        price_element = soup.select_one("div.price-box p.special-price span.price")
+        if price_element:
+            details["price"] = price_element.get_text(strip=True)
+            # logger.info(f"Giá: {details['price']}")
+        
+        # Lấy giá gốc (nếu có)
+        original_price_element = soup.select_one("div.price-box p.old-price span.price")
+        if original_price_element:
+            details["original_price"] = original_price_element.get_text(strip=True)
+            # logger.info(f"Giá gốc: {details['original_price']}")
+        
+        # Lấy phần trăm giảm giá (nếu có)
+        discount_element = soup.select_one("span.discount-percent")
+        if discount_element:
+            details["discount"] = discount_element.get_text(strip=True)
+            # logger.info(f"Giảm giá: {details['discount']}")
+        
+        # Lấy URL hình ảnh
+        image_element =  soup.select_one("meta[property='og:image']")
+        if image_element:
+                details["image_url"] = image_element.get("content")
+        
+        # Lấy thông số kỹ thuật từ bảng thông tin sách
+        info_table = soup.select_one("table.data-table")
+        if info_table:
+            rows = info_table.select("tr") or info_table.select("tbody tr")
+            for row in rows:
+                cells = row.select("th, td") or row.select("td")
+                if len(cells) >= 2:
+                    key = cells[0].get_text(strip=True).lower()
+                    value = cells[1].get_text(strip=True)
+                    
+                    # Chuyển đổi key sang tiếng Anh để dễ sử dụng
+                    key_mapping = {
+                        "mã hàng": "product_code",
+                        "tên nhà cung cấp": "supplier",
+                        "nhà cung cấp": "supplier",
+                        "tác giả": "author",
+                        "nxb": "publisher",
+                        "năm xb": "publish_year",
+                        "công ty phát hành": "distributor",
+                        "kích thước bao bì": "dimensions",
+                        "hình thức": "cover_type",
+                        "số trang": "page_count",
+                        "trọng lượng (gr)": "weight",
+                    }
+                    # Kiểm tra xem key có trong mapping không, nếu không thì kiểm tra thêm
+                    normalized_key = key_mapping.get(key, key.replace(" ", "_"))
+                    
+                    details[normalized_key] = value
+                    # logger.info(f"Thông tin: {key} -> {normalized_key} = {value}")
+        # Đảm bảo có URL trong chi tiết
+        details["url"] = book_url
+        
+        # Kiểm tra kết quả
+        if len(details) > 1:  # Luôn có ít nhất URL
+            logger.info(f"Lấy được {len(details)} thuộc tính từ trang chi tiết")
+        else:
+            logger.warning(f"Lấy được rất ít thông tin từ trang chi tiết: {book_url}")
+            
+        return details
+            
+    except Exception as e:
+        logger.error(f"Lỗi khi phân tích trang chi tiết: {e}")
+        return {"url": book_url, "error": str(e)}
+
 def parse_books(html):
     """Phân tích HTML để trích xuất thông tin sách từ website Fahasa."""
     soup = BeautifulSoup(html, 'lxml')
@@ -67,7 +159,6 @@ def parse_books(html):
             if not title_element:
                 logger.warning("Không tìm thấy tiêu đề, bỏ qua sách này")
                 continue
-            
             # Lấy text tiêu đề, làm sạch các phần tử phụ
             title = title_element.get_text(strip=True)
             
@@ -75,42 +166,11 @@ def parse_books(html):
             book_url = title_element.get('href', '')
             if book_url and not book_url.startswith('http'):
                 book_url = f"https://www.fahasa.com{book_url}" if book_url.startswith('/') else f"https://www.fahasa.com/{book_url}"
-            
-            # Trích xuất tác giả
-            author_element = book.select_one("div.product-author span")
-            author = author_element.get_text(strip=True) if author_element else None
-            
-            # Trích xuất giá
-            special_price_element = book.select_one("p.special-price span.price")
-            if special_price_element:
-                price = special_price_element.get_text(strip=True)
-            else:
-                price_element = book.select_one("span.price")
-                price = price_element.get_text(strip=True) if price_element else "N/A"
-            
-            # Trích xuất giá gốc
-            old_price_element = book.select_one("p.old-price span.price")
-            old_price = old_price_element.get_text(strip=True) if old_price_element else None
-            
-            # Trích xuất phần trăm giảm giá
-            discount_element = book.select_one("span.discount-percent")
-            discount = discount_element.get_text(strip=True) if discount_element else None
-            
-            # Trích xuất URL hình ảnh
-            img_element = book.select_one("span.product-image img.lazyload")
-            img_url = None
-            if img_element:
-                img_url = img_element.get('data-src') or img_element.get('src')
-            
+     
             # Xây dựng dữ liệu sách
             book_data = {
                 "title": title,
-                "author": author,
-                "price": price,
-                "original_price": old_price,
-                "discount": discount,
                 "url": book_url,
-                "image_url": img_url
             }
             
             books.append(book_data)
@@ -167,7 +227,23 @@ def crawl_fahasa():
         
         books = parse_books(html)
         logger.info(f"Đã tìm thấy {len(books)} sách trên trang {page_count + 1}")
-        all_books.extend(books)
+        
+        # Lấy thông tin chi tiết cho từng sách
+        detailed_books = []
+        for book in books:
+            if "url" in book and book["url"]:
+                book_details = get_book_details(book["url"])
+                if book_details:
+                    detailed_books.append(book_details)
+                    # Delay lịch sự giữa các yêu cầu
+                    time.sleep(1)
+                else:
+                    # Nếu không lấy được chi tiết, vẫn giữ thông tin cơ bản
+                    detailed_books.append(book)
+            else:
+                detailed_books.append(book)
+        
+        all_books.extend(detailed_books)
         
         # Lấy URL trang tiếp theo
         next_url = get_next_page_url(html, url)

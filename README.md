@@ -18,22 +18,28 @@ Hệ thống bao gồm các thành phần sau:
 ## Flow hoạt động
 
 1. **Crawler** thu thập dữ liệu từ Fahasa.com:
-   - Truy cập URL: `https://www.fahasa.com/sach-trong-nuoc/van-hoc-trong-nuoc.html`
-   - Thu thập thông tin sách: tên, tác giả, giá, giá gốc, phần trăm giảm giá, URL sách, URL ảnh
-   - Lưu dữ liệu vào file JSON trong thư mục `/data`
+   - Truy cập nhiều URL từ Fahasa.com cho các danh mục sách khác nhau:
+     - Văn học trong nước: `https://www.fahasa.com/sach-trong-nuoc/van-hoc-trong-nuoc.html`
+     - Kinh tế: `https://www.fahasa.com/sach-trong-nuoc/kinh-te-chinh-tri-phap-ly.html`
+     - Tâm lý - Kỹ năng sống: `https://www.fahasa.com/sach-trong-nuoc/tam-ly-ky-nang-song.html`
+     - Nuôi dạy con: `https://www.fahasa.com/sach-trong-nuoc/nuoi-day-con.html`
+     - Sách học ngoại ngữ: `https://www.fahasa.com/sach-trong-nuoc/sach-hoc-ngoai-ngu.html`
+   - Thu thập thông tin sách: tên, tác giả, giá, giá gốc, phần trăm giảm giá, URL sách, URL ảnh, danh mục
+   - Lưu dữ liệu vào các file JSON trong thư mục `/data`, cả dạng riêng lẻ theo danh mục và tổng hợp
 
 2. **Ingestion** xử lý dữ liệu:
    - Đợi Crawler thu thập dữ liệu xong
    - Đọc dữ liệu từ file JSON
    - Tạo schema trong PostgreSQL nếu chưa tồn tại
    - Chuẩn hóa dữ liệu trước khi nhập
-   - Nhập dữ liệu vào bảng `books`
+   - Nhập dữ liệu vào bảng `books` (bao gồm thông tin danh mục)
 
 3. **API** (FastAPI) cung cấp endpoints:
-   - `/books` - Lấy danh sách sách với phân trang
+   - `/books` - Lấy danh sách sách với phân trang và lọc theo danh mục
    - `/books/{id}` - Lấy thông tin chi tiết của một sách
    - `/books/search/title` - Tìm kiếm sách theo tiêu đề
    - `/books/search/author` - Tìm kiếm sách theo tác giả
+   - `/books/search/category` - Tìm kiếm sách theo danh mục
 
 4. **Web UI** hiển thị giao diện:
    - Trang chủ có form tìm kiếm
@@ -76,8 +82,10 @@ Fahasa Website -> Crawler -> JSON Files -> Ingestion -> PostgreSQL -> API -> [Ng
 
 ### Các tham số truy vấn:
 - Lấy sách phân trang: `/books?limit=10&offset=20`
+- Lọc theo danh mục: `/books?category=van-hoc-trong-nuoc&limit=10` 
 - Tìm kiếm theo tiêu đề: `/books/search/title?keyword=kim&limit=10`
 - Tìm kiếm theo tác giả: `/books/search/author?keyword=nguyen&limit=10`
+- Tìm kiếm theo danh mục: `/books/search/category?category=kinh-te&limit=10`
 
 ### Ví dụ các API call:
 1. Lấy 10 sách đầu tiên:
@@ -99,6 +107,24 @@ Fahasa Website -> Crawler -> JSON Files -> Ingestion -> PostgreSQL -> API -> [Ng
    ```
    GET http://localhost:8080/books/search/author?keyword=nguyen&limit=10&offset=0
    ```
+
+5. Tìm kiếm sách thuộc danh mục "kinh-te":
+   ```
+   GET http://localhost:8080/books/search/category?category=kinh-te&limit=10&offset=0
+   ```
+
+6. Kết hợp tìm kiếm theo tác giả và lọc theo danh mục:
+   ```
+   GET http://localhost:8080/books/search/author?keyword=nguyen&category=van-hoc-trong-nuoc&limit=10
+   ```
+
+## Danh sách danh mục sách
+Hệ thống hiện hỗ trợ các danh mục sách sau:
+- `van-hoc-trong-nuoc`: Văn học trong nước
+- `kinh-te`: Kinh tế - Chính trị - Pháp lý
+- `tam-ly-ky-nang-song`: Tâm lý - Kỹ năng sống
+- `nuoi-day-con`: Nuôi dạy con
+- `sach-hoc-ngoai-ngu`: Sách học ngoại ngữ
 
 ## Tài liệu chi tiết các thành phần
 

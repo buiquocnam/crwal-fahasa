@@ -1,64 +1,61 @@
-# Fahasa Data Ingestion
+# Ingestion Service
 
-Module này chịu trách nhiệm nhập dữ liệu sách từ file JSON (được tạo bởi Crawler) vào cơ sở dữ liệu PostgreSQL. Module này đảm bảo dữ liệu được chuẩn hóa, lọc và lưu trữ đúng cách.
+Ingestion Service là thành phần quan trọng trong kiến trúc hệ thống, chịu trách nhiệm đọc dữ liệu từ các file JSON được tạo bởi Crawler và chuyển dữ liệu này vào hệ thống cơ sở dữ liệu thông qua Database API.
+
+## Kiến trúc
+
+Dựa theo sơ đồ kiến trúc hệ thống, Ingestion Service có các tương tác sau:
+
+1. **Nhận dữ liệu từ Landing Zone**: Ingestion Service đọc các file JSON được lưu trữ trong Landing Zone (được tạo bởi Crawler).
+
+2. **Gửi dữ liệu đến Database API**: Sau khi xử lý dữ liệu từ JSON, Ingestion Service gửi dữ liệu này đến Database API để lưu trữ trong cơ sở dữ liệu.
+
+3. **Không kết nối trực tiếp đến Database**: Ingestion Service không tương tác trực tiếp với cơ sở dữ liệu mà phải thông qua Database API.
 
 ## Quy trình hoạt động
 
-### 1. Khởi tạo
-- Thiết lập logging để ghi nhật ký quá trình
-- Thiết lập các hằng số: đường dẫn file JSON, thông tin kết nối PostgreSQL
+1. **Khởi động và chuẩn bị**:
+   - Đợi các dịch vụ phụ thuộc khởi động (Database API)
+   - Kiểm tra kết nối đến Database API
 
-### 2. Đợi file dữ liệu (hàm `wait_for_data_file`)
-- Kiểm tra và đợi cho đến khi file JSON từ crawler xuất hiện
-- Có cơ chế chờ với số lần thử tối đa
-- Đảm bảo file có nội dung và đọc được
+2. **Tìm kiếm file dữ liệu**:
+   - Đợi đến khi các file JSON từ Crawler sẵn sàng trong Landing Zone
+   - Ưu tiên file tổng hợp nếu có, nếu không thì xử lý từng file theo danh mục
 
-### 3. Đọc dữ liệu từ file JSON (hàm `read_json_data`)
-- Mở file JSON với encoding UTF-8 để hỗ trợ tiếng Việt
-- Parse nội dung JSON thành cấu trúc dữ liệu Python
-- Kiểm tra tính hợp lệ của dữ liệu
-- Trả về mảng các object sách
+3. **Đọc và xử lý dữ liệu**:
+   - Đọc dữ liệu từ các file JSON
+   - Xác thực và chuẩn hóa dữ liệu nếu cần
 
-### 4. Kết nối đến PostgreSQL (hàm `get_db_connection`)
-- Thiết lập kết nối đến PostgreSQL
-- Xử lý các tham số kết nối: host, port, database, user, password
-- Cấu hình tự động chuyển dictionary lưới bằng DictCursor
-- Có cơ chế thử lại kết nối nếu thất bại
-- Trả về đối tượng kết nối để sử dụng trong các hàm khác
+4. **Gửi dữ liệu đến Database API**:
+   - Kiểm tra xem đã có dữ liệu trong database chưa (thông qua Database API)
+   - Nếu chưa có, gửi dữ liệu đến Database API để lưu trữ
+   - Sử dụng phương thức phù hợp (POST/PATCH) để gửi dữ liệu
 
-### 5. Tạo schema database (hàm `create_schema`)
-- Tạo bảng "books" nếu chưa tồn tại
-- Định nghĩa cấu trúc bảng với các trường:
-  - id: SERIAL PRIMARY KEY
-  - title: TEXT NOT NULL
-  - author: TEXT
-  - price: TEXT
-  - original_price: TEXT
-  - discount: TEXT
-  - url: TEXT
-  - image_url: TEXT
-- Xử lý lỗi nếu có vấn đề khi tạo bảng
+5. **Xử lý lỗi và ghi log**:
+   - Ghi log toàn bộ quá trình
+   - Xử lý lỗi kết nối và lỗi dữ liệu
+   - Cung cấp thông tin về số lượng bản ghi đã xử lý thành công/thất bại
 
-### 6. Chuẩn hóa dữ liệu (hàm `clean_book_data`)
-- Nhận một object sách từ dữ liệu JSON
-- Kiểm tra và đảm bảo các trường bắt buộc tồn tại
-- Loại bỏ các kí tự đặc biệt không hợp lệ nếu cần
-- Trả về object sách đã được chuẩn hóa
+## Cấu hình
 
-### 7. Nhập dữ liệu vào PostgreSQL (hàm `ingest_data`)
-- Nhận dữ liệu sách đã được chuẩn hóa
-- Kết nối đến database
-- Tạo schema nếu cần
-- Lặp qua từng sách và chèn vào bảng "books"
-- Sử dụng transaction để đảm bảo tính toàn vẹn dữ liệu
-- Đếm và ghi log số lượng sách đã được chèn thành công
+Ingestion Service sử dụng các biến môi trường hoặc tệp cấu hình để xác định:
 
-### 8. Hàm chính (hàm `main`)
-- Đợi file dữ liệu từ crawler
-- Đọc dữ liệu JSON
-- Chuẩn hóa dữ liệu sách
-- Nhập dữ liệu vào PostgreSQL
-- Xử lý lỗi và ghi log toàn bộ quá trình
+- Đường dẫn đến thư mục chứa file JSON (DATA_DIR)
+- Tên file tổng hợp (COMBINED_DATA_FILE)
+- URL của Database API (API_BASE_URL)
+- Cấu hình timeout và retry cho các yêu cầu API
+
+## Xử lý lỗi
+
+Ingestion Service được thiết kế để xử lý các tình huống lỗi sau:
+
+- Database API không khả dụng
+- Định dạng file JSON không hợp lệ
+- Dữ liệu thiếu hoặc không đúng định dạng
+- Lỗi kết nối mạng
+- Lỗi xác thực hoặc phân quyền
+
+Ingestion Service sẽ ghi log chi tiết các lỗi và cố gắng tiếp tục xử lý các bản ghi khác nếu có thể.
 
 ## Điểm đặc biệt
 
