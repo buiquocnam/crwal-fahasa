@@ -193,3 +193,58 @@ Nếu API không thể kết nối đến PostgreSQL:
 - Kiểm tra biến `API_URL` trong file web.py
 - Đảm bảo tất cả services kết nối đến cùng mạng Docker 
 - Xem logs của web: `docker-compose logs -f web`
+
+# Hệ thống Crawler và Ingestion
+
+Đây là hệ thống crawler dữ liệu sách từ Fahasa và xử lý (ingestion) dữ liệu vào cơ sở dữ liệu.
+
+## Cơ chế hoạt động
+
+### Mô hình callback giữa Crawler và Ingestion
+
+Hệ thống sử dụng cơ chế callback đơn giản và hiệu quả:
+
+1. **Crawler** thu thập dữ liệu và lưu vào file JSON
+2. Sau khi hoàn thành, **Crawler** gửi HTTP POST đến API của **Ingestion**
+3. **Ingestion** nhận thông báo, xử lý dữ liệu và lưu vào cơ sở dữ liệu
+
+### Cài đặt và chạy
+
+```bash
+# Khởi động toàn bộ hệ thống
+docker-compose up -d
+
+# Kiểm tra trạng thái crawler
+curl http://localhost:8003/status
+
+# Kích hoạt thủ công quá trình crawl
+curl http://localhost:8003/start
+
+# Kiểm tra trạng thái ingestion
+curl http://localhost:8004/status
+```
+
+## Các service chính
+
+### Crawler
+
+- **crawler_api**: API cho phép điều khiển và giám sát crawler
+  - Endpoint: `/start` - Kích hoạt quá trình crawl
+  - Endpoint: `/status` - Xem trạng thái hiện tại
+  - Endpoint: `/notify` - Gửi thủ công callback đến ingestion
+
+- **crawler_scheduler**: Chạy crawler theo lịch định kỳ từ cấu hình
+
+### Ingestion
+
+- API nhận callback từ crawler và xử lý dữ liệu
+  - Endpoint: `/trigger` - Nhận thông báo từ crawler
+  - Endpoint: `/status` - Xem trạng thái của lần xử lý cuối
+
+## Cấu hình môi trường
+
+Các biến môi trường chính:
+
+- `CRAWLER_SOURCE_ID`: Định danh nguồn dữ liệu (mặc định: "fahasa")
+- `INGESTION_CALLBACK_URL`: URL để crawler gửi callback (mặc định: "http://ingestion:8000/trigger")
+- `CRAWLER_CONFIG_PATH`: Đường dẫn đến file cấu hình crawler

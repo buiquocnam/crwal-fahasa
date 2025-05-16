@@ -2,13 +2,27 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+# Cài đặt các gói cần thiết
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY crawler/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY crawler/ ./crawler/
 
-# Tat tao file .pyc va thu muc __pycache__
+# Tắt tạo file .pyc và thư mục __pycache__
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "-m", "crawler.main"] 
+# Expose port for API
+EXPOSE 8000
+
+# Cung cấp hai chế độ chạy
+# 1. API: Để xem trạng thái và chạy thủ công
+# 2. Schedular: Chạy theo lịch định sẵn từ file cấu hình
+
+# Mặc định chạy API
+CMD ["uvicorn", "crawler.api:app", "--host", "0.0.0.0", "--port", "8000"] 

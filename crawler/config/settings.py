@@ -1,25 +1,18 @@
 import os
 import logging
+import json
 
 # Thiết lập logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Các hằng số
-BASE_URL = "https://www.fahasa.com/sach-trong-nuoc/van-hoc-trong-nuoc.html"
-OUTPUT_DIR = "/app/data"
-OUTPUT_FILE = os.path.join(OUTPUT_DIR, "fahasa_data.json")
-MAX_PAGES = 1  # Giới hạn số trang để crawl
+# Đường dẫn tới file cấu hình 
+CONFIG_FILE_PATH = os.environ.get('CRAWLER_CONFIG_PATH', os.path.join(os.path.dirname(__file__), 'crawler_config.json'))
 
-# Cấu hình HTTP Request
-REQUEST_HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-    "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
-    "Connection": "keep-alive"
-}
+# ID nguồn crawl từ biến môi trường
+CRAWLER_SOURCE_ID = os.environ.get('CRAWLER_SOURCE_ID', 'fahasa')
 
-# Mapping tiếng Việt sang tiếng Anh cho các trường thông tin
+# Mapping tiếng Việt sang tiếng Anh
 KEY_MAPPING = {
     "mã hàng": "product_code",
     "tên nhà cung cấp": "supplier",
@@ -36,9 +29,37 @@ KEY_MAPPING = {
     "ngôn ngữ": "language"
 }
 
-# Cấu hình thời gian chờ giữa các request
-REQUEST_TIMEOUT = 15  # Thời gian tối đa cho mỗi request (giây)
-RETRY_DELAY = 2       # Thời gian chờ giữa các lần thử lại (giây)
-PAGE_DELAY = 2        # Thời gian chờ giữa các trang (giây)
-DETAIL_DELAY = 1      # Thời gian chờ giữa các request chi tiết sách (giây)
-MAX_RETRIES = 3       # Số lần thử lại tối đa khi request thất bại 
+# Khởi tạo CONFIG rỗng, sẽ được nạp từ file
+CONFIG = {}
+
+# Đọc cấu hình từ file
+def load_config():
+    """Nạp cấu hình từ file và cập nhật vào CONFIG"""
+    global CONFIG
+    
+    if os.path.exists(CONFIG_FILE_PATH):
+        try:
+            with open(CONFIG_FILE_PATH, 'r', encoding='utf-8') as f:
+                CONFIG = json.load(f)
+            logger.info(f"Đã nạp cấu hình từ {CONFIG_FILE_PATH}")
+        except Exception as e:
+            logger.error(f"Lỗi khi nạp cấu hình từ file: {e}")
+            logger.error("Khởi tạo không thành công, không có cấu hình mặc định")
+            raise RuntimeError(f"Không thể đọc file cấu hình: {e}")
+    else:
+        error_msg = f"Không tìm thấy file cấu hình tại {CONFIG_FILE_PATH}"
+        logger.error(error_msg)
+        raise FileNotFoundError(error_msg)
+    
+    # Tạo output_file dựa trên output_dir và CRAWLER_SOURCE_ID
+    CONFIG['OUTPUT_FILE'] = os.path.join(CONFIG['OUTPUT_DIR'], f"{CRAWLER_SOURCE_ID}_data.json")
+
+# Nạp cấu hình khi import module
+load_config()
+
+# Các hàm trợ giúp để lấy các cấu hình
+def get_config(key, default=None):
+    """Lấy giá trị cấu hình theo khóa"""
+    # Trực tiếp sử dụng chữ hoa
+    uppkey = key.upper()
+    return CONFIG.get(uppkey, default) 

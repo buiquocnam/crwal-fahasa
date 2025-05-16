@@ -1,0 +1,23 @@
+{
+    "BASE_URL": "https://www.fahasa.com/sach-trong-nuoc/van-hoc-trong-nuoc.html",
+    "OUTPUT_DIR": "/app/data",
+    "MAX_PAGES": 1,
+    "SCHEDULED_CRAWLING": true,
+    "SCHEDULE_TIME": "01:00",
+    "REQUEST_HEADERS": {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Connection": "keep-alive"
+    },
+    "REQUEST_TIMEOUT": 15,
+    "RETRY_DELAY": 2,
+    "PAGE_DELAY": 2,
+    "DETAIL_DELAY": 1,
+    "MAX_RETRIES": 3,
+    "ENABLED_CATEGORIES": [
+        "van-hoc-trong-nuoc",
+        "kinh-te",
+        "tam-ly-ky-nang-song"
+    ]
+} 
