@@ -1,9 +1,9 @@
 from bs4 import BeautifulSoup
 import re
 from crawler.config.settings import KEY_MAPPING, logger
-from crawler.utils.http import get_page
+from crawler.utils.http import get_html
 
-def parse_books(html):
+def parse_url_book(html):
     """
     Phân tích HTML để trích xuất thông tin sách từ website Fahasa.
     
@@ -11,7 +11,7 @@ def parse_books(html):
         html: Nội dung HTML của trang danh sách sách
         
     Returns:
-        list: Danh sách thông tin cơ bản các sách
+        list: url của từng sách trong danh mục
     """
     soup = BeautifulSoup(html, 'lxml')
     books = []
@@ -70,7 +70,7 @@ def get_book_details(book_url):
     """
     logger.info(f"Lấy thông tin chi tiết từ: {book_url}")
     
-    html = get_page(book_url)
+    html = get_html(book_url)
     if not html:
         logger.error(f"Không thể tải trang chi tiết sách: {book_url}")
         return None

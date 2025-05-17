@@ -1,19 +1,9 @@
-from fastapi import FastAPI, BackgroundTasks
-import logging
-import os
+from fastapi import FastAPI
 from datetime import datetime
 from ingestion.main import main as run_ingestion
-from pydantic import BaseModel
-
-# Thiết lập logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from ingestion.config.settings import logger
 
 app = FastAPI(title="Ingestion API")
-
-class CrawlerCallback(BaseModel):
-    source_id: str
-    output_file: str
 
 # Trạng thái đơn giản
 last_run = {"timestamp": None, "success": None}
@@ -34,18 +24,11 @@ def process_data():
 async def health_check():
     return {"status": "online"}
 
+@app.get("/trigger")
 @app.post("/trigger")
-async def trigger_ingestion(callback: CrawlerCallback, background_tasks: BackgroundTasks):
+async def trigger_ingestion():
     """Endpoint nhận callback từ crawler"""
-    logger.info(f"Nhận callback từ nguồn: {callback.source_id}")
-    
-    # Kiểm tra file dữ liệu
-    if not os.path.exists(callback.output_file):
-        logger.error(f"File không tồn tại: {callback.output_file}")
-        return {"success": False, "error": "File không tồn tại"}
-    
-    # Xử lý dữ liệu trong background
-    background_tasks.add_task(process_data)
+    process_data()
     return {"success": True}
 
 @app.get("/status")

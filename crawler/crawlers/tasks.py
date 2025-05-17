@@ -11,19 +11,13 @@ from crawler.crawlers.fahasa_crawler import crawl_data
 # Biến theo dõi trạng thái
 crawler_running = False
 
-def notify_ingestion(output_file):
+def notify_ingestion():
     """Gửi thông báo đến ingestion service"""
-    source_id = os.environ.get('CRAWLER_SOURCE_ID', 'fahasa')
     ingestion_url = os.environ.get("INGESTION_CALLBACK_URL", "http://ingestion:8000/trigger")
     
     try:
-        payload = {
-            "source_id": source_id,
-            "output_file": output_file
-        }
-        
         logger.info(f"Gửi thông báo đến: {ingestion_url}")
-        response = requests.post(ingestion_url, json=payload, timeout=5)
+        response = requests.post(ingestion_url, timeout=5)
         
         if response.status_code == 200:
             logger.info("Thông báo thành công")
@@ -35,7 +29,7 @@ def notify_ingestion(output_file):
         logger.error(f"Lỗi khi gửi thông báo: {e}")
         return False
 
-def crawler_task():
+def main():
     """Hàm chính xử lý toàn bộ quá trình crawl"""
     global crawler_running
     
@@ -59,17 +53,9 @@ def crawler_task():
             save_to_json(books, output_file)
             logger.info(f"Đã lưu {len(books)} sách từ danh mục {category} vào {output_file}")
             all_books.extend(books)
-            
-            # Thông báo cho ingestion
-            notify_ingestion(output_file)
-        
-        # Lưu tất cả sách vào file tổng hợp
-        output_file = get_config('OUTPUT_FILE')
-        save_to_json(all_books, output_file)
-        logger.info(f"Đã lưu tổng cộng {len(all_books)} sách vào file tổng hợp {output_file}")
         
         # Thông báo cho ingestion về file tổng hợp
-        notify_ingestion(output_file)
+        notify_ingestion()
         
         return True
     except Exception as e:
@@ -77,10 +63,3 @@ def crawler_task():
         return False
     finally:
         crawler_running = False
-
-def background_crawl():
-    """Chạy crawler trong background thread"""
-    try:
-        crawler_task()
-    except Exception as e:
-        logger.error(f"Lỗi: {e}") 

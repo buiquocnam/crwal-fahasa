@@ -1,10 +1,10 @@
 """
 API FastAPI cho dịch vụ crawler.
 """
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 import uvicorn
 from crawler.config.settings import get_config, logger
-from crawler.crawlers.tasks import background_crawl
+from crawler.crawlers.tasks import main
 from crawler.crawlers.scheduler import start_scheduler
 
 app = FastAPI(title="Crawler API")
@@ -28,9 +28,9 @@ async def root():
 
 @app.post("/crawl")
 @app.get("/crawl")
-async def start_crawl(background_tasks: BackgroundTasks):
+async def start_crawl():
     """Kích hoạt crawl thủ công"""
-    background_tasks.add_task(background_crawl)
+    main()
     return {"status": "started"}
 
 if __name__ == "__main__":

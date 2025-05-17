@@ -2,7 +2,7 @@ import os
 import json
 import glob
 from ingestion.config.settings import (
-    DATA_DIR, COMBINED_DATA_FILE, logger
+    DATA_DIR, logger
 )
 
 def load_json_data(file_path):
@@ -38,25 +38,11 @@ def get_all_data_files():
     """
     files = []
     
-    # Thêm file tổng hợp nếu có
-    if os.path.exists(COMBINED_DATA_FILE):
-        logger.info(f"Đã tìm thấy file dữ liệu tổng hợp: {COMBINED_DATA_FILE}")
-        files.append(COMBINED_DATA_FILE)
-    
     # Thêm các file theo danh mục
     category_files = glob.glob(os.path.join(DATA_DIR, "fahasa_*.json"))
     if category_files:
         logger.info(f"Đã tìm thấy {len(category_files)} file dữ liệu theo danh mục")
         files.extend(category_files)
-    
-    # Kiểm tra xác nhận tất cả các files
-    for file in list(files):  # Sử dụng một bản sao để có thể xóa trong khi lặp
-        if not os.path.exists(file):
-            logger.warning(f"File {file} không tồn tại, bỏ qua")
-            files.remove(file)
-        elif os.path.getsize(file) == 0:
-            logger.warning(f"File {file} rỗng, bỏ qua")
-            files.remove(file)
     
     if files:
         logger.info(f"Tổng cộng có {len(files)} file dữ liệu hợp lệ")

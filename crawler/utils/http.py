@@ -2,7 +2,7 @@ import requests
 import time
 from crawler.config.settings import get_config, logger
 
-def get_page(url):
+def get_html(url):
     """
     Lấy nội dung trang từ Fahasa với cơ chế thử lại.
     

@@ -5,7 +5,7 @@ import threading
 import schedule
 import time
 from crawler.config.settings import get_config, logger
-from crawler.crawlers.tasks import crawler_task
+from crawler.crawlers.tasks import main
 
 # Biến theo dõi trạng thái scheduler
 stop_scheduler = False
@@ -18,7 +18,7 @@ def run_scheduler():
     logger.info(f"Đã khởi động scheduler, sẽ chạy crawler vào lúc {schedule_time} hàng ngày")
     
     # Thiết lập schedule
-    schedule.every().day.at(schedule_time).do(crawler_task)
+    schedule.every().day.at(schedule_time).do(main)
     
     # Chạy schedule loop
     while not stop_scheduler:
