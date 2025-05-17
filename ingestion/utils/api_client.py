@@ -36,3 +36,27 @@ def import_books_batch(books):
     except Exception as e:
         logger.error(f"Lỗi khi sử dụng endpoint batch: {e}")
         return {"success_count": 0, "failed_count": len(books), "failed_items": []}
+
+def delete_all_books():
+    """
+    Xóa tất cả sách trong database thông qua API.
+    
+    Returns:
+        bool: True nếu xóa thành công, False nếu có lỗi
+        int: Số lượng sách đã xóa
+    """
+    try:
+        logger.info("Đang xóa tất cả sách từ database...")
+        response = requests.delete(f"{API_BASE_URL}/books/deleteAll")
+        
+        if response.status_code == 200:
+            result = response.json()
+            count = result.get("count", 0)
+            logger.info(f"Đã xóa thành công {count} sách từ database")
+            return True, count
+        else:
+            logger.error(f"Lỗi khi xóa sách: {response.status_code} - {response.text}")
+            return False, 0
+    except Exception as e:
+        logger.error(f"Lỗi khi gọi API xóa sách: {e}")
+        return False, 0

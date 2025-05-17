@@ -1,7 +1,7 @@
 import time
 from ingestion.config.settings import logger
 from ingestion.utils.data_loader import load_json_data, get_all_data_files
-from ingestion.utils.api_client import import_books_batch
+from ingestion.utils.api_client import delete_all_books, import_books_batch
 from ingestion.validation.validator import validate_book, clean_book_data
 
 def import_to_database(data):
@@ -32,8 +32,17 @@ def import_to_database(data):
         if not valid_books:
             logger.error("Không có sách nào hợp lệ để nhập")
             return False
+        logger.info(f"Đã xác thực {len(valid_books)} sách hợp lệ")
+
+        logger.info("Tiến hành xóa dữ liệu hiện có...")
+        success, deleted_count = delete_all_books()
+        if success:
+            logger.info(f"Đã xóa {deleted_count} sách hiện có trong database")
+        else:
+            logger.warning("Không thể xóa dữ liệu hiện có, tiếp tục với dữ liệu mới")
         
-        logger.info(f"Đã xác thực {len(valid_books)} sách hợp lệ. Tiến hành nhập vào database...")
+
+        logger.info(f"Tiến hành nhập dữ liệu mới vào database...")
         
        
         result = import_books_batch(valid_books)

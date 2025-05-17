@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, Depends, Body
+from fastapi import APIRouter, HTTPException, Query, Depends, Body, Response
 from typing import Dict, Any, Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
@@ -253,3 +253,25 @@ async def search_books_by_category(
         logger.error(f"Lỗi khi tìm kiếm sách theo danh mục '{category}': {e}")
         raise HTTPException(status_code=500, detail=str(e)) 
     
+@router.delete("/deleteAll", status_code=200)
+async def delete_all_books(db: Session = Depends(get_db)):
+    """Xóa tất cả sách từ database."""
+    try:
+        # Đếm số lượng sách trước khi xóa
+        count = db.query(BookDB).count()
+        
+        # Xóa tất cả sách
+        db.query(BookDB).delete()
+        db.commit()
+        
+        logger.info(f"Đã xóa tất cả {count} sách từ database")
+        
+        return {
+            "success": True,
+            "message": f"Đã xóa thành công {count} sách từ database",
+            "count": count
+        }
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Lỗi khi xóa tất cả sách: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
