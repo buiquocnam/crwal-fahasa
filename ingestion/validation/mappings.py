@@ -3,28 +3,7 @@ Chứa các ánh xạ (mapping) cho quá trình xác thực và chuyển đổi 
 """
 
 # Mapping cho các trường dữ liệu từ Fahasa sang hệ thống
-KEY_MAPPING = {
-    # Tiếng Anh
-    "title": "title",
-    "price": "price", 
-    "original_price": "original_price",
-    "discount": "discount",
-    "author": "author",
-    "url": "url",
-    "image_url": "image_url",
-    "category": "category",
-    "product_code": "product_code",
-    "supplier": "supplier",
-    "publisher": "publisher",
-    "publish_year": "publish_year",
-    "weight": "weight",
-    "dimensions": "dimensions",
-    "page_count": "page_count",
-    "cover_type": "cover_type",
-    "description": "description",
-    "language": "language",
-    "translator": "translator",
-    
+KEY_MAPPING = {    
     # Tiếng Việt
     "mã hàng": "product_code",
     "tên nhà cung cấp": "supplier",

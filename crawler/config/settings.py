@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 # Đường dẫn tới file cấu hình 
 CONFIG_FILE_PATH = os.environ.get('CRAWLER_CONFIG_PATH', os.path.join(os.path.dirname(__file__), 'crawler_config.json'))
-
 # ID nguồn crawl từ biến môi trường
 CRAWLER_SOURCE_ID = os.environ.get('CRAWLER_SOURCE_ID', 'fahasa')
 
@@ -53,6 +52,14 @@ def load_config():
     
     # Tạo output_file dựa trên output_dir và CRAWLER_SOURCE_ID
     CONFIG['OUTPUT_FILE'] = os.path.join(CONFIG['OUTPUT_DIR'], f"{CRAWLER_SOURCE_ID}_data.json")
+    
+    # Tạo output_files cho từng danh mục
+    CONFIG['CATEGORY_OUTPUT_FILES'] = {}
+    for category in CONFIG.get('ENABLED_CATEGORIES', []):
+        CONFIG['CATEGORY_OUTPUT_FILES'][category] = os.path.join(
+            CONFIG['OUTPUT_DIR'], 
+            f"{CRAWLER_SOURCE_ID}_{category}.json"
+        )
 
 # Nạp cấu hình khi import module
 load_config()

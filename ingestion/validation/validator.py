@@ -53,29 +53,10 @@ def clean_book_data(book):
     """
     cleaned_book = {}
     
-    # Duyệt qua tất cả các trường trong dữ liệu gốc
-    for field, value in book.items():
-        # Chuẩn hóa tên trường (lowercase và gạch dưới thay cho khoảng trắng)
-        normalized_field = field.lower().replace(" ", "_")
-        
-        # Áp dụng mapping trực tiếp nếu có
-        if normalized_field in KEY_MAPPING:
-            target_field = KEY_MAPPING[normalized_field]
-            cleaned_book[target_field] = value
-    
     # Giữ lại các trường có trong schema dữ liệu
     valid_fields = BOOK_SCHEMA["required"] + BOOK_SCHEMA["optional"]
     for field in valid_fields:
         if field in book:
             cleaned_book[field] = book[field]
-    
-    # Xử lý tiêu đề
-    if "title" in cleaned_book:
-        cleaned_book["title"] = cleaned_book["title"].strip()
-    
-    # Xử lý URL
-    if "url" in cleaned_book and cleaned_book["url"]:
-        if not cleaned_book["url"].startswith("http"):
-            cleaned_book["url"] = "https://" + cleaned_book["url"].lstrip(":/")
     
     return cleaned_book 
