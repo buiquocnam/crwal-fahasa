@@ -63,30 +63,18 @@
             max-height: 400px;
             object-fit: contain;
         }
-        .nav-tabs {
-            margin-bottom: 20px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header d-flex align-items-center">
+        <div class="header align-items-center">
             <a href="/" class="text-decoration-none">
                 <img src="https://cdn0.fahasa.com/skin/frontend/ma_vanese/fahasa/images/logo.png" alt="Fahasa Logo" class="fahasa-logo">
             </a>
             <h1>Fahasa Book Search</h1>
         </div>
 
-        <ul class="nav nav-tabs">
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if not view_mode else '' }}" href="/">Tìm kiếm</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link {{ 'active' if view_mode == 'all_books' else '' }}" href="/books">Danh sách sách</a>
-            </li>
-        </ul>
-
-        {% if view_mode != 'book_detail' %}
+        <!-- Search Form -->
         <div class="search-container">
             <form action="/search" method="get" class="mb-4">
                 <div class="input-group mb-3">
@@ -99,14 +87,18 @@
                 </div>
             </form>
 
+            {% if keyword %}
+            <a href="/" class="btn btn-outline-secondary">Xóa tìm kiếm</a>
+            {% endif %}
+
             {% if error %}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger mt-3">
                 {{ error }}
             </div>
             {% endif %}
         </div>
-        {% endif %}
 
+        <!-- Book Detail -->
         {% if view_mode == 'book_detail' and single_book %}
         <div class="book-detail my-4">
             <div class="card">
@@ -142,20 +134,27 @@
                                 <h4 class="text-danger">{{ single_book.price }}</h4>
                                 {% endif %}
                             </div>
-                            {% if single_book.url %}
-                            <a href="{{ single_book.url }}" class="btn btn-primary" target="_blank">Xem tại Fahasa</a>
-                            {% endif %}
-                            <a href="/" class="btn btn-outline-secondary mt-3">Quay lại tìm kiếm</a>
+                            <div style="display: flex;
+                                        flex-direction: column;
+                                        width: 20%;">
+                                {% if single_book.url %}
+                                <a href="{{ single_book.url }}" class="btn btn-primary" target="_blank">Xem tại Fahasa</a>
+                                {% endif %}
+                                <a href="/" class="btn btn-outline-secondary mt-3">Quay lại tìm kiếm</a>
+                            </div>
+                            
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Book List -->
         {% elif books %}
         <div class="search-results">
             {% if keyword %}
             <h2>Kết quả tìm kiếm {{ "tiêu đề" if search_type == 'title' else "tác giả" }} "{{ keyword }}" ({{ total }} kết quả)</h2>
-            {% elif view_mode == 'all_books' %}
+            {% else %}
             <h2>Danh sách sách ({{ total }} sách)</h2>
             {% endif %}
             
@@ -205,9 +204,9 @@
                         {% if keyword %}
                         <a class="page-link" href="/search?keyword={{ keyword }}&type={{ search_type }}&page={{ page - 1 }}" aria-label="Previous">
                         {% else %}
-                        <a class="page-link" href="/books?page={{ page - 1 }}" aria-label="Previous">
+                        <a class="page-link" href="/?page={{ page - 1 }}" aria-label="Previous">
                         {% endif %}
-                            <span aria-hidden="true">&laquo;</span>
+                            <span aria-hidden="true">«</span>
                         </a>
                     </li>
                     {% endif %}
@@ -217,7 +216,7 @@
                         {% if keyword %}
                         <a class="page-link" href="/search?keyword={{ keyword }}&type={{ search_type }}&page={{ p }}">{{ p }}</a>
                         {% else %}
-                        <a class="page-link" href="/books?page={{ p }}">{{ p }}</a>
+                        <a class="page-link" href="/?page={{ p }}">{{ p }}</a>
                         {% endif %}
                     </li>
                     {% endfor %}
@@ -227,9 +226,9 @@
                         {% if keyword %}
                         <a class="page-link" href="/search?keyword={{ keyword }}&type={{ search_type }}&page={{ page + 1 }}" aria-label="Next">
                         {% else %}
-                        <a class="page-link" href="/books?page={{ page + 1 }}" aria-label="Next">
+                        <a class="page-link" href="/?page={{ page + 1 }}" aria-label="Next">
                         {% endif %}
-                            <span aria-hidden="true">&raquo;</span>
+                            <span aria-hidden="true">»</span>
                         </a>
                     </li>
                     {% endif %}
@@ -240,6 +239,10 @@
         {% elif keyword %}
         <div class="alert alert-info">
             Không tìm thấy sách nào với từ khóa "{{ keyword }}".
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            Không có sách nào để hiển thị.
         </div>
         {% endif %}
     </div>
@@ -252,4 +255,4 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html> 
+</html>

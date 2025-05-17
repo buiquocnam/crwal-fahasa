@@ -7,8 +7,10 @@ from crawler.config.settings import get_config, logger
 from crawler.crawlers.tasks import main
 from crawler.crawlers.scheduler import start_scheduler
 
-app = FastAPI(title="Crawler API")
-
+app = FastAPI(
+    title="Crawler API",
+    root_path="/crawler"
+)
 @app.on_event("startup")
 async def startup_event():
     """Khởi động API và thiết lập crawler theo lịch"""
@@ -27,7 +29,6 @@ async def root():
     }
 
 @app.post("/crawl")
-@app.get("/crawl")
 async def start_crawl():
     """Kích hoạt crawl thủ công"""
     main()

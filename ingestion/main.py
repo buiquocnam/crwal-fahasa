@@ -5,23 +5,6 @@ from ingestion.utils.api_client import import_books_batch
 from ingestion.validation.validator import validate_book, clean_book_data
 
 def import_to_database(data):
-
-    [
-        {
-            "title": "Sách 1",
-            "author": "Tác giả 1",
-            "description": "Mô tả sách 1",
-            "price": 100000,
-            "category": "Sách khoa học"
-        },
-        {
-            "title": "Sách 2",
-            "author": "Tác giả 2",
-            "description": "Mô tả sách 2",
-            "price": 200000,
-            "category": "Sách khoa học",
-        }
-    ]
     """
     Nhập dữ liệu vào database thông qua API.
     

@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Constants
-API_URL = "http://api:8000"
+API_URL = os.environ.get("API_URL", "http://fahasa_api:8000")
 
 # Initialize Flask
 app = Flask(__name__)
@@ -39,8 +39,40 @@ def wait_for_api():
 
 @app.route('/')
 def index():
-    """Render the home page with search form."""
-    return render_template('index.html')
+    """Render the home page with search form and all books."""
+    page = request.args.get('page', 1, type=int)
+    limit = 10
+    offset = (page - 1) * limit
+    
+    try:
+        response = requests.get(
+            f"{API_URL}/books",
+            params={"limit": limit, "offset": offset}
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Calculate pagination info
+            total = data.get('total', 0)
+            total_pages = (total + limit - 1) // limit if total > 0 else 0
+            
+            return render_template(
+                'index.html',
+                books=data.get('books', []),
+                page=page,
+                total_pages=total_pages,
+                total=total
+            )
+        else:
+            error_message = f"API error: {response.status_code}"
+            logger.error(error_message)
+            return render_template('index.html', error=error_message)
+    
+    except requests.RequestException as e:
+        error_message = f"Error connecting to API: {e}"
+        logger.error(error_message)
+        return render_template('index.html', error=error_message)
 
 @app.route('/search')
 def search():
@@ -72,6 +104,7 @@ def search():
             
             # Calculate pagination info
             total = data.get('total', 0)
+    
             total_pages = (total + limit - 1) // limit if total > 0 else 0
             
             return render_template(
@@ -82,44 +115,6 @@ def search():
                 page=page,
                 total_pages=total_pages,
                 total=total
-            )
-        else:
-            error_message = f"API error: {response.status_code}"
-            logger.error(error_message)
-            return render_template('index.html', error=error_message)
-    
-    except requests.RequestException as e:
-        error_message = f"Error connecting to API: {e}"
-        logger.error(error_message)
-        return render_template('index.html', error=error_message)
-
-@app.route('/books')
-def list_books():
-    """List all books with pagination."""
-    page = request.args.get('page', 1, type=int)
-    limit = 10
-    offset = (page - 1) * limit
-    
-    try:
-        response = requests.get(
-            f"{API_URL}/books",
-            params={"limit": limit, "offset": offset}
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            
-            # Calculate pagination info
-            total = data.get('total', 0)
-            total_pages = (total + limit - 1) // limit if total > 0 else 0
-            
-            return render_template(
-                'index.html',
-                books=data.get('books', []),
-                page=page,
-                total_pages=total_pages,
-                total=total,
-                view_mode="all_books"
             )
         else:
             error_message = f"API error: {response.status_code}"
@@ -157,4 +152,4 @@ if __name__ == "__main__":
     wait_for_api()
     
     # Start Flask
-    app.run(host='0.0.0.0', port=8000, debug=False) 
+    app.run(host='0.0.0.0', port=8000, debug=False)

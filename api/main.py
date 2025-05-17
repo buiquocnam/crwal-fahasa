@@ -12,7 +12,8 @@ from config import API_TITLE, API_DESCRIPTION, API_VERSION, logger
 app = FastAPI(
     title=API_TITLE,
     description=API_DESCRIPTION,
-    version=API_VERSION
+    version=API_VERSION,
+    root_path="/api"
 )
 
 # Thêm CORS middleware để cho phép các yêu cầu từ nguồn gốc khác

@@ -68,7 +68,7 @@ services:
       - DB_PASS=fahasa123
     restart: on-failure
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import socket; s = socket.socket(); s.connect(('localhost', 8000))\""]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/books"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -98,8 +98,41 @@ services:
         condition: service_healthy
       api:
         condition: service_healthy
+      crawler:
+        condition: service_healthy
     restart: on-failure
     command: ["uvicorn", "ingestion.api:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  # Web
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: fahasa_web
+    volumes:
+      - ./web:/app/web
+      - ./static:/app/static
+    ports:
+      - "8002:8000"
+    networks:
+      - fahasa_network
+    environment:
+      - API_URL=http://api:8000
+      - WAIT_HOSTS=api:8000
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=5
+      - WAIT_HOST_CONNECT_TIMEOUT=30
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import socket; s = socket.socket(); s.connect(('localhost', 8000))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    command: ["python", "/app/web/web.py"]
 
   # Nginx
   nginx:
@@ -113,6 +146,8 @@ services:
       - fahasa_network
     depends_on:
       api:
+        condition: service_healthy
+      web:
         condition: service_healthy
     restart: on-failure
 

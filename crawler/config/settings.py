@@ -50,9 +50,6 @@ def load_config():
         logger.error(error_msg)
         raise FileNotFoundError(error_msg)
     
-    # Tạo output_file dựa trên output_dir và CRAWLER_SOURCE_ID
-    CONFIG['OUTPUT_FILE'] = os.path.join(CONFIG['OUTPUT_DIR'], f"{CRAWLER_SOURCE_ID}_data.json")
-    
     # Tạo output_files cho từng danh mục
     CONFIG['CATEGORY_OUTPUT_FILES'] = {}
     for category in CONFIG.get('ENABLED_CATEGORIES', []):
@@ -70,3 +67,4 @@ def get_config(key, default=None):
     # Trực tiếp sử dụng chữ hoa
     uppkey = key.upper()
     return CONFIG.get(uppkey, default) 
+
