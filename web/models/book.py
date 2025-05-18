@@ -15,10 +15,10 @@ class Book:
             )
             if response.status_code == 200:
                 return response.json()
-            return {"books": [], "total": 0}
+            return {"items": [], "total": 0}
         except requests.RequestException as e:
             logger.error(f"Error getting books: {e}")
-            return {"books": [], "total": 0}
+            return {"items": [], "total": 0}
 
     def search_books(self, keyword: str, search_type: str = 'title', limit: int = 10, offset: int = 0) -> Dict:
         """Search books by keyword"""
@@ -30,10 +30,10 @@ class Book:
             )
             if response.status_code == 200:
                 return response.json()
-            return {"books": [], "total": 0}
+            return {"items": [], "total": 0}
         except requests.RequestException as e:
             logger.error(f"Error searching books: {e}")
-            return {"books": [], "total": 0}
+            return {"items": [], "total": 0}
 
     def get_book_by_id(self, book_id: int) -> Optional[Dict]:
         """Get book details by ID"""

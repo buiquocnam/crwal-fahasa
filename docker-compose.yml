@@ -22,17 +22,15 @@ services:
   crawler:
     build:
       context: .
-      dockerfile: Dockerfile.crawler
+      dockerfile: data_crawling/Dockerfile
     container_name: crawler
     volumes:
       - ./data:/app/data
-      - ./crawler:/app/crawler
+      - ./data_crawling:/app/data_crawling
     ports:
       - "8003:8000"
-    environment:
-      - CRAWLER_CONFIG_PATH=/app/crawler/config/crawler_config.json
-      - CRAWLER_SOURCE_ID=fahasa
-      - INGESTION_CALLBACK_URL=http://ingestion:8000/trigger
+    env_file:
+      - ./data_crawling/.env
     networks:
       - fahasa_network
     depends_on:
@@ -45,13 +43,13 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    command: ["python", "-m", "crawler.api"]
+    command: ["python", "-m", "data_crawling.main"]
 
   # API
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: database_api/Dockerfile
     container_name: fahasa_api
     ports:
       - "8001:8000"
@@ -60,15 +58,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=fahasa_db
-      - DB_USER=fahasa
-      - DB_PASS=fahasa123
+    env_file:
+      - ./database_api/.env
     restart: on-failure
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/books"]
+      test: ["CMD-SHELL", "python -c \"import socket; s = socket.socket(); s.connect(('localhost', 8000))\""]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -78,21 +72,17 @@ services:
   ingestion:
     build:
       context: .
-      dockerfile: Dockerfile.ingestion
+      dockerfile: data_ingestion/Dockerfile
     container_name: ingestion
     volumes:
       - ./data:/app/data
-      - ./ingestion:/app/ingestion
+      - ./data_ingestion:/app/data_ingestion
     ports:
       - "8004:8000"
     networks:
       - fahasa_network
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_NAME=fahasa_db
-      - DB_USER=fahasa
-      - DB_PASS=fahasa123
+    env_file:
+      - ./data_ingestion/.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -101,13 +91,13 @@ services:
       crawler:
         condition: service_healthy
     restart: on-failure
-    command: ["uvicorn", "ingestion.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "data_ingestion.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
   # Web
   web:
     build:
       context: .
-      dockerfile: Dockerfile.web
+      dockerfile: web/Dockerfile
     container_name: fahasa_web
     volumes:
       - ./web:/app/web
@@ -116,12 +106,8 @@ services:
       - "8002:8000"
     networks:
       - fahasa_network
-    environment:
-      - API_URL=http://api:8000
-      - WAIT_HOSTS=api:8000
-      - WAIT_HOSTS_TIMEOUT=300
-      - WAIT_SLEEP_INTERVAL=5
-      - WAIT_HOST_CONNECT_TIMEOUT=30
+    env_file:
+      - ./web/.env
     depends_on:
       api:
         condition: service_healthy
@@ -132,7 +118,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
-    command: ["python", "/app/web/app.py"]
+    command: ["python", "/app/web/main.py"]
 
   # Nginx
   nginx:

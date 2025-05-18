@@ -1,6 +1,6 @@
 import requests
 import time
-from config.settings import logger
+from web.config.settings import logger
 
 def wait_for_api(api_url: str, max_retries: int = 30, retry_delay: int = 2) -> bool:
     """
