@@ -2,13 +2,25 @@ FROM python:3.9-slim
 
 WORKDIR /app
 
+# Cài đặt các dependencies
 COPY web/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY web/ .
+# Copy toàn bộ code web vào container
+COPY web/ ./web/
 
-# Expose port 8000 for the Flask app
+# Thiết lập biến môi trường
+ENV FLASK_APP=app.py
+ENV FLASK_ENV=production
+ENV PYTHONPATH=/app
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+# Tat tao file .pyc va thu muc __pycache__
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Expose port 8000 cho Flask app
 EXPOSE 8000
 
-# Start the Flask application on port 8000
-CMD ["python", "-c", "import os; os.environ['FLASK_APP'] = 'web.py'; from web import app; app.run(host='0.0.0.0', port=8000, debug=False)"] 
+# Chạy ứng dụng
+CMD ["python", "app.py"] 
