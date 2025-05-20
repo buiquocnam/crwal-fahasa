@@ -1,0 +1,82 @@
+{% if books %}
+<div class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        {% if keyword %}
+        <h3 class="mb-0 fw-bold d-flex align-items-center">
+            <i class="bi bi-search me-2 text-primary"></i>
+            <span>Kết Quả Tìm Kiếm Theo {{ "Tên Sách" if search_type == 'title' else "Tác Giả" }}</span>
+            <span class="text-primary ms-2">"{{ keyword }}"</span>
+            <span class="badge bg-primary rounded-pill ms-2 animate__animated animate__fadeIn" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;">{{ total }}</span>
+        </h3>
+        {% else %}
+        <h2 class="mb-0 fw-bold d-flex align-items-center">
+            <i class="bi bi-book-half me-2 text-success"></i>
+            <span>Danh Sách Sách</span>
+            <span class="badge bg-success rounded-pill ms-2 animate__animated animate__fadeIn" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;">{{ total }}</span>
+        </h2>
+        {% endif %}
+        <div class="d-flex align-items-center">
+            <span class="badge bg-light text-dark p-2 fw-normal">
+                <i class="bi bi-book me-1"></i>Trang {{ page }} / {{ total_pages }}
+            </span>
+        </div>
+    </div>
+    
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+        {% for book in books %}
+            <div class="col">
+                {% include 'partials/book_card.html' %}
+            </div>
+        {% endfor %}
+    </div>
+    
+    {% if total_pages > 1 %}
+    <nav aria-label="Page navigation" class="mt-5">
+        <ul class="pagination justify-content-center">
+            {# Tạo URL cơ bản đơn giản #}
+            {% set base_url = "/search?" %}
+            {% if keyword %}
+                {% set base_url = base_url + "keyword=" + keyword + "&search_type=" + search_type %}
+                {% if category %}
+                    {% set base_url = base_url + "&category=" + category %}
+                {% endif %}
+            {% elif category %}
+                {% set base_url = base_url + "category=" + category %}
+            {% endif %}
+            
+            {# Nút trang trước #}
+            <li class="page-item {{ 'disabled' if page == 1 else '' }}">
+                <a class="page-link" href="{{ base_url }}{{ '&' if keyword or category else '' }}page={{ page - 1 if page > 1 else 1 }}">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            
+            {# Hiển thị số trang #}
+            {% set start_page = [1, page - 2]|max %}
+            {% set end_page = [total_pages, page + 2]|min %}
+            
+            {% for p in range(start_page, end_page + 1) %}
+            <li class="page-item {{ 'active' if p == page else '' }}">
+                <a class="page-link" href="{{ base_url }}{{ '&' if keyword or category else '' }}page={{ p }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            
+            {# Nút trang sau #}
+            <li class="page-item {{ 'disabled' if page == total_pages else '' }}">
+                <a class="page-link" href="{{ base_url }}{{ '&' if keyword or category else '' }}page={{ page + 1 if page < total_pages else total_pages }}">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% elif keyword %}
+<div class="alert alert-info d-flex align-items-center p-4" role="alert">
+    <i class="bi bi-info-circle-fill fs-3 me-3 flex-shrink-0"></i>
+    <div>
+        <h5 class="alert-heading mb-1">Không tìm thấy kết quả</h5>
+        <p class="mb-0">Không tìm thấy sách nào phù hợp với từ khóa "{{ keyword }}". Thử từ khóa khác hoặc xem qua các danh mục.</p>
+    </div>
+</div>
+{% endif %} 

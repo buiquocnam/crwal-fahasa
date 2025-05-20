@@ -6,7 +6,7 @@ from utils.api_utils import wait_for_api
 
 def create_app():
     """Initialize and configure Flask application"""
-    app = Flask(__name__, static_folder=None)
+    app = Flask(__name__, static_folder='templates/static', static_url_path='/static')
     
     # Initialize model and controller
     book_model = Book(API_URL)

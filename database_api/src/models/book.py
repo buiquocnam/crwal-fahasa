@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from database_api.src.database.init_db import Base
 
 class BookModel(Base):
-    """SQLAlchemy model for books table."""
+    """Mô hình SQLAlchemy cho bảng sách."""
     __tablename__ = "books"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -34,9 +34,9 @@ class BookModel(Base):
     def __repr__(self):
         return f"<Book(id={self.id}, title='{self.title}', author='{self.author}')>"
 
-# Pydantic models for request/response
+# Các mô hình Pydantic cho yêu cầu/phản hồi
 class BookBase(BaseModel):
-    """Base model for book data."""
+    """Mô hình cơ sở cho dữ liệu sách."""
     title: str = Field(..., min_length=1, max_length=255)
     price: Optional[str] = None
     original_price: Optional[str] = None
@@ -57,11 +57,11 @@ class BookBase(BaseModel):
     language: Optional[str] = None
 
 class BookCreate(BookBase):
-    """Model for creating a book."""
+    """Mô hình để tạo sách."""
     pass
 
 class BookUpdate(BaseModel):
-    """Model for updating a book."""
+    """Mô hình để cập nhật sách."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     price: Optional[str] = None
     original_price: Optional[str] = None
@@ -82,7 +82,7 @@ class BookUpdate(BaseModel):
     language: Optional[str] = None
 
 class Book(BookBase):
-    """Model for book response."""
+    """Mô hình cho phản hồi sách."""
     id: int
     created_at: datetime
     updated_at: datetime
@@ -91,22 +91,16 @@ class Book(BookBase):
         from_attributes = True
 
 class BookList(BaseModel):
-    """Model for paginated list of books."""
+    """Mô hình cho danh sách sách và kết quả tìm kiếm."""
     items: List[Book]
     total: int
     limit: int
-    offset: int
-
-class SearchResult(BaseModel):
-    """Model for search results."""
-    items: List[Book]
-    total: int
-    limit: int
-    offset: int
+    page: int = 1
+    total_pages: int = 1
     keyword: Optional[str] = None
 
 class BatchBookResult(BaseModel):
-    """Model for batch operation results."""
+    """Mô hình cho kết quả thao tác hàng loạt."""
     success_count: int
     error_count: int
     errors: Optional[List[str]] = None 

@@ -6,7 +6,7 @@ import time
 from typing import Generator
 from database_api.src.config.settings import DATABASE_URL, logger
 
-# Create SQLAlchemy engine with connection pooling
+# Tạo SQLAlchemy engine với connection pooling
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True, 
@@ -16,18 +16,18 @@ engine = create_engine(
     pool_timeout=30      
 )
 
-# Create session factory
+# Tạo session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create base class for models
+# Tạo lớp cơ sở cho các models
 Base = declarative_base()
 
 def get_db() -> Generator[Session, None, None]:
     """
-    Get database session.
+    Lấy phiên làm việc với cơ sở dữ liệu.
     
     Yields:
-        Session: Database session
+        Session: Phiên làm việc với cơ sở dữ liệu
     """
     db = SessionLocal()
     try:
@@ -37,51 +37,50 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> bool:
     """
-    Initialize database tables with retry mechanism.
+    Khởi tạo các bảng trong cơ sở dữ liệu với cơ chế thử lại.
     
     Returns:
-        bool: True if successful, False otherwise
+        bool: True nếu thành công, False nếu thất bại
     """
     max_retries = 5
     retry_interval = 3
     
     for attempt in range(max_retries):
         try:
-            logger.info(f"Attempting to initialize database (attempt {attempt + 1}/{max_retries})")
+            logger.info(f"Đang cố gắng khởi tạo cơ sở dữ liệu (lần thử {attempt + 1}/{max_retries})")
             
-            # Test database connection
+            # Kiểm tra kết nối cơ sở dữ liệu
             with engine.connect() as conn:
-                logger.info("Database connection successful")
+                logger.info("Kết nối cơ sở dữ liệu thành công")
             
-            # Import models here to ensure they are registered with Base
+            # Import models ở đây để đảm bảo chúng được đăng ký với Base
             from database_api.src.models.book import BookModel
             
-            # Drop all tables and recreate them
+            # Xóa tất cả các bảng và tạo lại chúng
             Base.metadata.drop_all(bind=engine)
-            logger.info("Dropped existing tables")
+            logger.info("Đã xóa các bảng hiện có")
             
-            # Create tables
+            # Tạo các bảng
             Base.metadata.create_all(bind=engine)
-            logger.info("Database tables created successfully")
+            logger.info("Các bảng cơ sở dữ liệu đã được tạo thành công")
             return True
             
         except Exception as e:
-            logger.error(f"Error initializing database (attempt {attempt + 1}/{max_retries}): {str(e)}")
+            logger.error(f"Lỗi khi khởi tạo cơ sở dữ liệu (lần thử {attempt + 1}/{max_retries}): {str(e)}")
             if attempt < max_retries - 1:
-                logger.warning(f"Retrying in {retry_interval} seconds...")
+                logger.warning(f"Thử lại sau {retry_interval} giây...")
                 time.sleep(retry_interval)
             else:
-                logger.error(f"Failed to initialize database after {max_retries} attempts")
+                logger.error(f"Không thể khởi tạo cơ sở dữ liệu sau {max_retries} lần thử")
                 return False
     
     return False
 
-# Initialize database on module import
+# Khởi tạo cơ sở dữ liệu khi module được import
 try:
     if init_db():
-        logger.info("Database initialized successfully")
+        logger.info("Cơ sở dữ liệu đã được khởi tạo thành công")
     else:
-        logger.error("Failed to initialize database")
+        logger.error("Không thể khởi tạo cơ sở dữ liệu")
 except Exception as e:
-    logger.error(f"Unexpected error during database initialization: {str(e)}")
-
+    logger.error(f"Lỗi không mong đợi trong quá trình khởi tạo cơ sở dữ liệu: {str(e)}")

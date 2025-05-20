@@ -1,0 +1,28 @@
+<!-- Toast Notifications System -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 1080;">
+    <div id="liveToast" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i id="toastIcon" class="bi bi-info-circle text-primary me-2"></i>
+            <strong class="me-auto" id="toastTitle">Thông báo</strong>
+            <small id="toastTime">Vừa xong</small>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            Thông báo sẽ hiển thị ở đây
+        </div>
+    </div>
+</div>
+
+<!-- Toast Initialization Script (minimal) -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize toast
+        const toastEl = document.getElementById('liveToast');
+        if (toastEl) {
+            window.toastInstance = new bootstrap.Toast(toastEl, {
+                delay: 5000,
+                animation: true
+            });
+        }
+    });
+</script> 

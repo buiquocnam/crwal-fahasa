@@ -1,146 +1,146 @@
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException
 from ..repositories.book_repository import BookRepository
-from ..models.book import BookCreate, Book, BookList, SearchResult, BatchBookResult
+from ..models.book import BookCreate, Book, BookList, BatchBookResult
 from database_api.src.config.settings import logger
  
 class BookService:
-    """Service for book business logic."""
+    """Dịch vụ xử lý logic nghiệp vụ cho sách."""
     
     def __init__(self):
-        """Initialize service."""
+        """Khởi tạo dịch vụ."""
         self.repository = BookRepository()
     
-    def get_books(self, skip: int = 0, limit: int = 100, title: Optional[str] = None, category: Optional[str] = None) -> BookList:
+    def get_books(self, limit: int = 10, page: int = 1, keyword: Optional[str] = None, 
+                 search_type: str = "title", category: Optional[str] = None) -> BookList:
         """
-        Get all books with pagination and filtering.
+        Lấy tất cả sách hoặc tìm kiếm sách với phân trang và lọc.
         
-        Args:
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            title: Filter by title
-            category: Filter by category
+        Tham số:
+            limit: Số lượng bản ghi tối đa trả về
+            page: Số trang hiện tại
+            keyword: Từ khóa tìm kiếm (nếu có)
+            search_type: Loại tìm kiếm (title, author, category)
+            category: Lọc theo thể loại
             
-        Returns:
-            BookList: Paginated list of books
+        Trả về:
+            BookList: Danh sách sách đã phân trang
             
-        Raises:
-            HTTPException: If there's an error retrieving books
+        Ngoại lệ:
+            HTTPException: Nếu có lỗi khi truy xuất sách
         """
         try:
-            result = self.repository.get_all(limit=limit, offset=skip, title=title, category=category)
+            result = {}
+            
+            # Nếu có từ khóa tìm kiếm, thực hiện tìm kiếm
+            if keyword:
+                if search_type == "title":
+                    result = self.repository.search_by_title(keyword, limit=limit, page=page, category=category)
+                elif search_type == "author":
+                    result = self.repository.search_by_author(keyword, limit=limit, page=page, category=category)
+                elif search_type == "category":
+                    result = self.repository.search_by_category(keyword, limit=limit, page=page)
+                else:
+                    raise HTTPException(status_code=400, detail="Loại tìm kiếm không hợp lệ")
+            
+            # Nếu không có từ khóa tìm kiếm, lấy tất cả sách với phân trang
+            else:
+                result = self.repository.get_all(limit=limit, page=page, category=category)
+            
+            # Chuyển đổi kết quả từ repository thành BookList
             return BookList(
                 items=[Book.from_orm(book) for book in result["items"]],
                 total=result["total"],
                 limit=result["limit"],
-                offset=result["offset"]
+                page=result["page"],
+                total_pages=result["total_pages"]
             )
+            
+        except HTTPException:
+            raise
         except Exception as e:
-            logger.error(f"Error getting books: {e}")
-            raise HTTPException(status_code=500, detail="Error retrieving books")
+            logger.error(f"Lỗi khi lấy hoặc tìm kiếm sách: {e}")
+            raise HTTPException(status_code=500, detail="Lỗi khi truy xuất sách")
+    
+    def get_categories(self) -> List[str]:
+        """
+        Lấy danh sách tất cả các danh mục sách.
+        
+        Trả về:
+            List[str]: Danh sách các danh mục sách
+            
+        Ngoại lệ:
+            HTTPException: Nếu có lỗi khi truy xuất danh mục
+        """
+        try:
+            # Gọi phương thức từ repository để lấy danh sách danh mục
+            categories = self.repository.get_categories()
+            return categories
+        except Exception as e:
+            logger.error(f"Lỗi khi lấy danh sách danh mục: {e}")
+            raise HTTPException(status_code=500, detail="Lỗi khi truy xuất danh mục sách")
     
     def get_book(self, book_id: int) -> Book:
         """
-        Get book by ID.
+        Lấy sách theo ID.
         
-        Args:
-            book_id: Book ID
+        Tham số:
+            book_id: ID của sách
             
-        Returns:
-            Book: Book data
+        Trả về:
+            Book: Dữ liệu sách
             
-        Raises:
-            HTTPException: If book not found or error occurs
+        Ngoại lệ:
+            HTTPException: Nếu không tìm thấy sách hoặc có lỗi xảy ra
         """
         try:
             book = self.repository.get_by_id(book_id)
             if not book:
-                raise HTTPException(status_code=404, detail="Book not found")
+                raise HTTPException(status_code=404, detail="Không tìm thấy sách")
             return Book.from_orm(book)
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Error getting book: {e}")
-            raise HTTPException(status_code=500, detail="Error retrieving book")
+            logger.error(f"Lỗi khi lấy thông tin sách: {e}")
+            raise HTTPException(status_code=500, detail="Lỗi khi truy xuất sách")
 
     def create_books(self, books_data: List[BookCreate]) -> BatchBookResult:
         """
-        Create multiple books.
+        Tạo nhiều sách.
         
-        Args:
-            books_data: List of book data
+        Tham số:
+            books_data: Danh sách dữ liệu sách
             
-        Returns:
-            BatchBookResult: Results with success and error counts
+        Trả về:
+            BatchBookResult: Kết quả với số lượng thành công và lỗi
             
-        Raises:
-            HTTPException: If all creations fail
+        Ngoại lệ:
+            HTTPException: Nếu tất cả việc tạo đều thất bại
         """
         try:
             result = self.repository.create_many([book.dict() for book in books_data])
             if result["success_count"] == 0:
-                raise HTTPException(status_code=400, detail="Error creating books")
+                raise HTTPException(status_code=400, detail="Lỗi khi tạo sách")
             return BatchBookResult(**result)
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Error creating books: {e}")
-            raise HTTPException(status_code=500, detail="Error creating books")
-    
+            logger.error(f"Lỗi khi tạo sách: {e}")
+            raise HTTPException(status_code=500, detail="Lỗi khi tạo sách")   
     
     def delete_all_books(self) -> Dict[str, int]:
         """
-        Delete all books.
+        Xóa tất cả sách.
         
-        Returns:
-            Dict[str, int]: Number of deleted books
+        Trả về:
+            Dict[str, int]: Số lượng sách đã xóa
             
-        Raises:
-            HTTPException: If deletion fails
+        Ngoại lệ:
+            HTTPException: Nếu việc xóa thất bại
         """
         try:
             result = self.repository.delete_all()
             return result
         except Exception as e:
-            logger.error(f"Error deleting all books: {e}")
-            raise HTTPException(status_code=500, detail="Error deleting all books")
-    
-    def search_books(self, query: str, search_type: str = "title", skip: int = 0, limit: int = 100, category: Optional[str] = None) -> SearchResult:
-        """
-        Search books.
-        
-        Args:
-            query: Search query
-            search_type: Type of search (title, author, category)
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            category: Filter by category
-            
-        Returns:
-            SearchResult: Search results
-            
-        Raises:
-            HTTPException: If search fails or invalid search type
-        """
-        try:
-            if search_type == "title":
-                result = self.repository.search_by_title(query, limit=limit, offset=skip, category=category)
-            elif search_type == "author":
-                result = self.repository.search_by_author(query, limit=limit, offset=skip, category=category)
-            elif search_type == "category":
-                result = self.repository.search_by_category(query, limit=limit, offset=skip)
-            else:
-                raise HTTPException(status_code=400, detail="Invalid search type")
-            
-            return SearchResult(
-                items=[Book.from_orm(book) for book in result["items"]],
-                total=result["total"],
-                limit=result["limit"],
-                offset=result["offset"],
-                keyword=result.get("keyword", query)
-            )
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error searching books: {e}")
-            raise HTTPException(status_code=500, detail="Error searching books") 
+            logger.error(f"Lỗi khi xóa tất cả sách: {e}")
+            raise HTTPException(status_code=500, detail="Lỗi khi xóa tất cả sách") 

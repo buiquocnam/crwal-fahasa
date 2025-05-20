@@ -7,73 +7,81 @@ from database_api.src.database.init_db import get_db, SessionLocal
 from database_api.src.config.settings import logger
 
 class BookRepository:
-    """Repository for book database operations."""
+    """Repository cho các thao tác cơ sở dữ liệu sách."""
     
     def __init__(self):
-        """Initialize repository."""
+        """Khởi tạo repository."""
         self.SessionLocal = SessionLocal
     
-    def get_all(self, limit: int = 100, offset: int = 0, title: Optional[str] = None, category: Optional[str] = None) -> Dict[str, Any]:
+    def get_all(self, limit: int = 10, page: int = 1, title: Optional[str] = None, category: Optional[str] = None) -> Dict[str, Any]:
         """
-        Get all books with pagination and filtering.
+        Lấy tất cả sách với phân trang và lọc.
         
         Args:
-            limit: Maximum number of records to return
-            offset: Number of records to skip
-            title: Filter by title
-            category: Filter by category
+            limit: Số lượng bản ghi tối đa trả về
+            page: Số trang hiện tại
+            title: Lọc theo tiêu đề
+            category: Lọc theo thể loại
             
         Returns:
-            Dict[str, Any]: Dictionary containing books and total count
+            Dict[str, Any]: Dictionary chứa sách và tổng số lượng
         """
         try:
             session = self.SessionLocal()
             query = select(BookModel)
             
-            # Apply filters
+            # Áp dụng bộ lọc
             if title:
                 query = query.filter(BookModel.title.ilike(f"%{title}%"))
             if category:
                 query = query.filter(BookModel.category == category)
             
-            # Get total count
+            # Lấy tổng số lượng
             total = session.scalar(select(func.count()).select_from(query.subquery()))
             
-            # Apply pagination and ordering
+            # Tính offset từ page và limit
+            offset = (page - 1) * limit
+            
+            # Áp dụng phân trang và sắp xếp
             query = query.order_by(desc(BookModel.created_at)).offset(offset).limit(limit)
             
-            # Execute query
+            # Thực thi truy vấn
             books = session.scalars(query).all()
+            
+            # Tính total_pages
+            total_pages = (total + limit - 1) // limit if total > 0 else 1
             
             result = {
                 "items": books,
                 "total": total,
                 "limit": limit,
-                "offset": offset
+                "page": page,
+                "total_pages": total_pages
             }
             
             session.close()
             return result
         except Exception as e:
-            logger.error(f"Error getting books: {e}")
+            logger.error(f"Lỗi khi lấy sách: {e}")
             if 'session' in locals():
                 session.close()
             return {
                 "items": [],
                 "total": 0,
                 "limit": limit,
-                "offset": offset
+                "page": page,
+                "total_pages": 0
             }
     
     def get_by_id(self, book_id: int) -> Optional[BookModel]:
         """
-        Get book by ID.
+        Lấy sách theo ID.
         
         Args:
-            book_id: Book ID
+            book_id: ID sách
             
         Returns:
-            Optional[BookModel]: Book if found, None otherwise
+            Optional[BookModel]: Sách nếu tìm thấy, None nếu không
         """
         try:
             session = self.SessionLocal()
@@ -82,20 +90,20 @@ class BookRepository:
             session.close()
             return book
         except Exception as e:
-            logger.error(f"Error getting book {book_id}: {e}")
+            logger.error(f"Lỗi khi lấy sách {book_id}: {e}")
             if 'session' in locals():
                 session.close()
             return None
     
     def create_many(self, books_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
-        Create multiple books.
+        Tạo nhiều sách.
         
         Args:
-            books_data: List of book data dictionaries
+            books_data: Danh sách các từ điển dữ liệu sách
             
         Returns:
-            Dict[str, Any]: Results with success and error counts
+            Dict[str, Any]: Kết quả với số lượng thành công và lỗi
         """
         success_count = 0
         error_count = 0
@@ -115,7 +123,7 @@ class BookRepository:
             try:
                 session.commit()
             except Exception as e:
-                logger.error(f"Error committing batch: {e}")
+                logger.error(f"Lỗi khi commit hàng loạt: {e}")
                 session.rollback()
                 return {
                     "success_count": 0,
@@ -130,7 +138,7 @@ class BookRepository:
                 "errors": errors if errors else None
             }
         except Exception as e:
-            logger.error(f"Error in create_many: {e}")
+            logger.error(f"Lỗi trong create_many: {e}")
             if 'session' in locals():
                 session.close()
             return {
@@ -141,10 +149,10 @@ class BookRepository:
     
     def delete_all(self) -> Dict[str, int]:
         """
-        Delete all books.
+        Xóa tất cả sách.
         
         Returns:
-            Dict[str, int]: Number of deleted books
+            Dict[str, int]: Số lượng sách đã xóa
         """
         try:
             session = self.SessionLocal()
@@ -154,23 +162,23 @@ class BookRepository:
             session.close()
             return {"deleted_count": count}
         except Exception as e:
-            logger.error(f"Error deleting all books: {e}")
+            logger.error(f"Lỗi khi xóa tất cả sách: {e}")
             if 'session' in locals():
                 session.close()
             return {"deleted_count": 0}
     
-    def search_by_title(self, keyword: str, limit: int = 100, offset: int = 0, category: Optional[str] = None) -> Dict[str, Any]:
+    def search_by_title(self, keyword: str, limit: int = 10, page: int = 1, category: Optional[str] = None) -> Dict[str, Any]:
         """
-        Search books by title.
+        Tìm kiếm sách theo tiêu đề.
         
         Args:
-            keyword: Search keyword
-            limit: Maximum number of records to return
-            offset: Number of records to skip
-            category: Filter by category
+            keyword: Từ khóa tìm kiếm
+            limit: Số lượng bản ghi tối đa trả về
+            page: Số trang hiện tại
+            category: Lọc theo thể loại
             
         Returns:
-            Dict[str, Any]: Search results
+            Dict[str, Any]: Kết quả tìm kiếm
         """
         try:
             session = self.SessionLocal()
@@ -180,42 +188,51 @@ class BookRepository:
                 query = query.filter(BookModel.category == category)
             
             total = session.scalar(select(func.count()).select_from(query.subquery()))
+            
+            # Tính offset từ page và limit
+            offset = (page - 1) * limit
+            
             books = session.scalars(query.order_by(desc(BookModel.created_at)).offset(offset).limit(limit)).all()
+            
+            # Tính total_pages
+            total_pages = (total + limit - 1) // limit if total > 0 else 1
             
             result = {
                 "items": books,
                 "total": total,
                 "limit": limit,
-                "offset": offset,
+                "page": page,
+                "total_pages": total_pages,
                 "keyword": keyword
             }
             
             session.close()
             return result
         except Exception as e:
-            logger.error(f"Error searching books by title: {e}")
+            logger.error(f"Lỗi khi tìm kiếm sách theo tiêu đề: {e}")
             if 'session' in locals():
                 session.close()
             return {
                 "items": [],
                 "total": 0,
                 "limit": limit,
-                "offset": offset,
+                "page": page,
+                "total_pages": 0,
                 "keyword": keyword
             }
     
-    def search_by_author(self, keyword: str, limit: int = 100, offset: int = 0, category: Optional[str] = None) -> Dict[str, Any]:
+    def search_by_author(self, keyword: str, limit: int = 10, page: int = 1, category: Optional[str] = None) -> Dict[str, Any]:
         """
-        Search books by author.
+        Tìm kiếm sách theo tác giả.
         
         Args:
-            keyword: Search keyword
-            limit: Maximum number of records to return
-            offset: Number of records to skip
-            category: Filter by category
+            keyword: Từ khóa tìm kiếm
+            limit: Số lượng bản ghi tối đa trả về
+            page: Số trang hiện tại
+            category: Lọc theo thể loại
             
         Returns:
-            Dict[str, Any]: Search results
+            Dict[str, Any]: Kết quả tìm kiếm
         """
         try:
             session = self.SessionLocal()
@@ -225,65 +242,107 @@ class BookRepository:
                 query = query.filter(BookModel.category == category)
             
             total = session.scalar(select(func.count()).select_from(query.subquery()))
+            
+            # Tính offset từ page và limit
+            offset = (page - 1) * limit
+            
             books = session.scalars(query.order_by(desc(BookModel.created_at)).offset(offset).limit(limit)).all()
+            
+            # Tính total_pages
+            total_pages = (total + limit - 1) // limit if total > 0 else 1
             
             result = {
                 "items": books,
                 "total": total,
                 "limit": limit,
-                "offset": offset,
+                "page": page,
+                "total_pages": total_pages,
                 "keyword": keyword
             }
             
             session.close()
             return result
         except Exception as e:
-            logger.error(f"Error searching books by author: {e}")
+            logger.error(f"Lỗi khi tìm kiếm sách theo tác giả: {e}")
             if 'session' in locals():
                 session.close()
             return {
                 "items": [],
                 "total": 0,
                 "limit": limit,
-                "offset": offset,
+                "page": page,
+                "total_pages": 0,
                 "keyword": keyword
             }
     
-    def search_by_category(self, category: str, limit: int = 100, offset: int = 0) -> Dict[str, Any]:
+    def search_by_category(self, category: str, limit: int = 10, page: int = 1) -> Dict[str, Any]:
         """
-        Search books by category.
+        Tìm kiếm sách theo thể loại.
         
         Args:
-            category: Category to search
-            limit: Maximum number of records to return
-            offset: Number of records to skip
+            category: Thể loại cần tìm
+            limit: Số lượng bản ghi tối đa trả về
+            page: Số trang hiện tại
             
         Returns:
-            Dict[str, Any]: Search results
+            Dict[str, Any]: Kết quả tìm kiếm
         """
         try:
             session = self.SessionLocal()
             query = select(BookModel).filter(BookModel.category == category)
             
             total = session.scalar(select(func.count()).select_from(query.subquery()))
+            
+            # Tính offset từ page và limit
+            offset = (page - 1) * limit
+            
             books = session.scalars(query.order_by(desc(BookModel.created_at)).offset(offset).limit(limit)).all()
+            
+            # Tính total_pages
+            total_pages = (total + limit - 1) // limit if total > 0 else 1
             
             result = {
                 "items": books,
                 "total": total,
                 "limit": limit,
-                "offset": offset
+                "page": page,
+                "total_pages": total_pages
             }
             
             session.close()
             return result
         except Exception as e:
-            logger.error(f"Error searching books by category: {e}")
+            logger.error(f"Lỗi khi tìm kiếm sách theo thể loại: {e}")
             if 'session' in locals():
                 session.close()
             return {
                 "items": [],
                 "total": 0,
                 "limit": limit,
-                "offset": offset
-            } 
+                "page": page,
+                "total_pages": 0
+            }
+    
+    def get_categories(self) -> List[str]:
+        """
+        Lấy danh sách tất cả các danh mục sách duy nhất.
+        
+        Returns:
+            List[str]: Danh sách các danh mục sách
+        """
+        try:
+            session = self.SessionLocal()
+            
+            # Truy vấn để lấy tất cả các danh mục duy nhất
+            query = select(BookModel.category).distinct().order_by(BookModel.category)
+            
+            # Thực thi truy vấn và lấy kết quả
+            categories = [cat[0] for cat in session.execute(query).all() if cat[0]]
+            
+            session.close()
+            return categories
+        except Exception as e:
+            logger.error(f"Lỗi khi lấy danh sách danh mục: {e}")
+            if 'session' in locals():
+                session.close()
+            return [] 

@@ -1,0 +1,138 @@
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <div class="row">
+            <!-- Book Image Column -->
+            <div class="col-md-4 text-center mb-4 mb-md-0">
+                <div class="mb-3">
+                    {% if book.image_url %}
+                    <img src="{{ book.image_url }}" class="img-fluid rounded shadow-sm" alt="{{ book.title }}" style="max-height: 400px;">
+                    {% else %}
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 400px;">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-image display-1"></i>
+                            <p class="mt-2">Không có ảnh</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{{ book.url }}" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>Xem tại Fahasa
+                    </a>
+                </div>
+            </div>
+
+            <!-- Book Info Column -->
+            <div class="col-md-8">
+                <h2 class="h3 mb-3">{{ book.title }}</h2>
+
+                <div class="mb-4">
+                    {% if book.author %}
+                    <span class="badge bg-light text-dark me-2">
+                        <i class="bi bi-person me-1"></i>{{ book.author }}
+                    </span>
+                    {% endif %}
+                    {% if book.publisher %}
+                    <span class="badge bg-light text-dark me-2">
+                        <i class="bi bi-building me-1"></i>{{ book.publisher }}
+                    </span>
+                    {% endif %}
+                    {% if book.publish_year %}
+                    <span class="badge bg-light text-dark">
+                        <i class="bi bi-calendar me-1"></i>{{ book.publish_year }}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="card bg-light border-danger border-start border-4 mb-4">
+                    <div class="card-body">
+                        <div class="d-flex align-items-baseline gap-3">
+                            <span class="h4 text-danger mb-0">{{ book.price or 'Chưa cập nhật' }}</span>
+                            {% if book.original_price %}
+                            <span class="text-muted text-decoration-line-through">{{ book.original_price }}</span>
+                            {% endif %}
+                            {% if book.discount %}
+                            <span class="badge bg-success">{{ book.discount }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Thông tin chi tiết</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <i class="bi bi-tag text-primary me-2"></i>
+                                    <strong>Mã sản phẩm:</strong>
+                                    <span class="ms-1">{{ book.product_code or 'Chưa cập nhật' }}</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-shop text-primary me-2"></i>
+                                    <strong>Nhà cung cấp:</strong>
+                                    <span class="ms-1">{{ book.supplier or 'Chưa cập nhật' }}</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-bookmark text-primary me-2"></i>
+                                    <strong>Thể loại:</strong>
+                                    <span class="ms-1">{{ book.category or 'Chưa cập nhật' }}</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-translate text-primary me-2"></i>
+                                    <strong>Ngôn ngữ:</strong>
+                                    <span class="ms-1">{{ book.language or 'Chưa cập nhật' }}</span>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <i class="bi bi-file-text text-primary me-2"></i>
+                                    <strong>Số trang:</strong>
+                                    <span class="ms-1">{{ book.page_count or 'Chưa cập nhật' }}</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-book text-primary me-2"></i>
+                                    <strong>Loại bìa:</strong>
+                                    <span class="ms-1">{{ book.cover_type or 'Chưa cập nhật' }}</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-rulers text-primary me-2"></i>
+                                    <strong>Kích thước:</strong>
+                                    <span class="ms-1">{{ book.dimensions or 'Chưa cập nhật' }}</span>
+                                </p>
+                                <p class="mb-2">
+                                    <i class="bi bi-box-seam text-primary me-2"></i>
+                                    <strong>Trọng lượng:</strong>
+                                    <span class="ms-1">{{ book.weight or 'Chưa cập nhật' }}</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if book.description %}
+                <div class="card border-primary border-start border-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Mô tả</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if book.description|length > 300 %}
+                            <p class="mb-0 description-preview">{{ book.description[:300] }}...</p>
+                            <p class="mb-0 description-full d-none">{{ book.description }}</p>
+                            <button class="btn btn-link btn-sm mt-2 toggle-description">
+                                <span class="show-more">Xem thêm <i class="bi bi-chevron-down"></i></span>
+                                <span class="show-less d-none">Thu gọn <i class="bi bi-chevron-up"></i></span>
+                            </button>
+                        {% else %}
+                            <p class="mb-0">{{ book.description }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div> 
