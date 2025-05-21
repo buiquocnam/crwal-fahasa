@@ -1,5 +1,5 @@
 <!-- Book Card -->
-<div class="book-card" onclick="window.location.href='/book/{{ book.id }}';" style="cursor: pointer;">
+<div class="book-card">
     <div class="book-card-img">
         {% if book.image_url %}
         <img src="{{ book.image_url }}" alt="{{ book.title }}">
@@ -22,10 +22,10 @@
         
         <div class="book-overlay">
             <div class="book-actions">
-                <a href="/book/{{ book.id }}" class="book-action-btn" onclick="event.stopPropagation();">
+                <a href="/book/{{ book.id }}" class="book-action-btn">
                     <i class="bi bi-eye"></i>
                 </a>
-                <button class="book-action-btn btn-wishlist" onclick="event.stopPropagation();">
+                <button class="book-action-btn btn-wishlist">
                     <i class="bi bi-heart"></i>
                 </button>
             </div>
@@ -38,7 +38,7 @@
         {% endif %}
         
         <h3 class="book-title">
-            <a href="/book/{{ book.id }}" onclick="event.preventDefault();">{{ book.title }}</a>
+            <a href="/book/{{ book.id }}">{{ book.title }}</a>
         </h3>
         
         {% if book.author %}

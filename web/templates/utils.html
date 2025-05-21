@@ -101,16 +101,15 @@
 {% macro render_category_name(category) -%}
     {{ get_category_name(category) }}
 {%- endmacro %}
-
 {% macro render_category_card(category) %}
-    <div class="col-md-4 col-lg-3 mb-4">
+    <div class="col-md-4 col-lg-3 mb-3">
         <a href="/search?category={{ category }}" class="text-decoration-none">
-            <div class="card category-card hover-shadow h-100 {{ get_category_bg(category) }}">
-                <div class="card-body text-center py-4">
-                    <div class="category-icon mb-3 {{ get_category_color(category) }}">
-                        <i class="bi {{ get_category_icon(category) }} fs-4"></i>
+            <div class="card category-card hover-shadow h-100 {{ get_category_bg(category) }} mx-auto" style="max-width: 280px;">
+                <div class="card-body text-center py-3">
+                    <div class="category-icon mb-2 {{ get_category_color(category) }}">
+                        <i class="bi {{ get_category_icon(category) }} fs-5"></i>
                     </div>
-                    <h5 class="card-title fw-bold mb-0">{{ get_category_name(category) }}</h5>
+                    <h6 class="card-title fw-bold mb-0">{{ get_category_name(category) }}</h6>
                 </div>
             </div>
         </a>

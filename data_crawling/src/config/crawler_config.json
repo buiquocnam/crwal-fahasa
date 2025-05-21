@@ -3,7 +3,9 @@
     "ENABLED_CATEGORIES": [
         "van-hoc-trong-nuoc",
         "kinh-te-chinh-tri-phap-ly",
-        "tam-ly-ky-nang-song"
+        "tam-ly-ky-nang-song",
+        "nuoi-day-con",
+        "sach-hoc-ngoai-ngu"
     ],
     "REQUEST_HEADERS": {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/91.0.4472.124 Safari/537.36",

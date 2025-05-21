@@ -11,7 +11,7 @@ class BookController:
     def index(self) -> str:
         """Xử lý trang chủ"""
         page = request.args.get('page', 1, type=int)
-        limit = request.args.get('limit', 12, type=int)
+        limit = request.args.get('limit', 15, type=int)
         category = request.args.get('category', None)
         
         # Lấy danh sách sách từ API
@@ -47,7 +47,7 @@ class BookController:
         keyword = request.args.get('keyword', '')
         search_type = request.args.get('search_type', 'title')  # title, author, category
         page = request.args.get('page', 1, type=int)
-        limit = request.args.get('limit', 12, type=int)
+        limit = request.args.get('limit', 15, type=int)
         category = request.args.get('category', None)
         
         # Kiểm tra nếu không có từ khóa tìm kiếm và không có category

@@ -65,8 +65,9 @@ def load_config():
     for category in CONFIG.get('ENABLED_CATEGORIES', []):
         CONFIG['CATEGORY_OUTPUT_FILES'][category] = os.path.join(
             CONFIG['OUTPUT_DIR'], 
-            f"{CRAWLER_SOURCE_ID}_{category}.json"
+            f"{category}.json"
         )
+        logger.info(f"Tạo output_file cho danh mục {category}: {CONFIG['CATEGORY_OUTPUT_FILES'][category]}")
 
 # Nạp cấu hình khi import module
 load_config()
