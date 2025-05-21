@@ -39,7 +39,7 @@ def get_all_data_files():
     files = []
     
     # Thêm các file theo danh mục
-    category_files = glob.glob(os.path.join(DATA_DIR, "fahasa_*.json"))
+    category_files = glob.glob(os.path.join(DATA_DIR, "*.json"))
     if category_files:
         logger.info(f"Đã tìm thấy {len(category_files)} file dữ liệu theo danh mục")
         files.extend(category_files)

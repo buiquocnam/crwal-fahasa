@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy web application code
 COPY web/ /app/web/
+COPY static/ /app/static/
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -26,4 +27,4 @@ ENV PYTHONPATH=/app
 EXPOSE 8000
 
 # Run the application
-CMD ["python", "/app/web/main.py"] 
+CMD ["python", "/app/web/main.py"]

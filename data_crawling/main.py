@@ -20,7 +20,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Crawler API",
-    root_path="/crawler"
 )
 
 @app.get("/")

@@ -68,7 +68,6 @@ async def root():
     return {
         "message": "API Sách Fahasa đang hoạt động!",
         "docs": "/docs",
-        "openapi": "/openapi.json"
     }
 
 # Health check endpoint
