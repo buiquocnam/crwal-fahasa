@@ -30,22 +30,26 @@ class BookService:
             HTTPException: Nếu có lỗi khi truy xuất sách
         """
         try:
-            result = {}
+            # Khởi tạo các tham số cho phương thức get_all
+            params = {
+                "limit": limit,
+                "page": page,
+                "category": category
+            }
             
-            # Nếu có từ khóa tìm kiếm, thực hiện tìm kiếm
+            # Thêm tham số tìm kiếm dựa trên search_type
             if keyword:
                 if search_type == "title":
-                    result = self.repository.search_by_title(keyword, limit=limit, page=page, category=category)
+                    params["title"] = keyword
                 elif search_type == "author":
-                    result = self.repository.search_by_author(keyword, limit=limit, page=page, category=category)
+                    params["author"] = keyword
                 elif search_type == "category":
-                    result = self.repository.search_by_category(keyword, limit=limit, page=page)
+                    params["category"] = keyword
                 else:
                     raise HTTPException(status_code=400, detail="Loại tìm kiếm không hợp lệ")
             
-            # Nếu không có từ khóa tìm kiếm, lấy tất cả sách với phân trang
-            else:
-                result = self.repository.get_all(limit=limit, page=page, category=category)
+            # Gọi phương thức get_all với các tham số
+            result = self.repository.get_all(**params)
             
             # Chuyển đổi kết quả từ repository thành BookList
             return BookList(

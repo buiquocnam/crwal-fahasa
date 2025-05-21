@@ -13,7 +13,7 @@ book_service = BookService()
 
 @router.get("/", response_model=BookList)
 async def get_books(
-    limit: int = Query(100, ge=1, le=100, description="Số lượng bản ghi tối đa trả về"),
+    limit: int = Query(10, ge=1, le=100, description="Số lượng bản ghi tối đa trả về"),
     page: int = Query(1, ge=1, description="Số trang hiện tại"),
     keyword: Optional[str] = Query(None, description="Từ khóa tìm kiếm (nếu có)"),
     search_type: str = Query("title", description="Loại tìm kiếm (title, author, category)"),
