@@ -1,0 +1,56 @@
+/* 
+* BASE.CSS
+* Chứa các biến CSS, reset và typography cơ bản 
+*/
+
+:root {
+    /* Colors */
+    --primary: #e63946;
+    --primary-dark: #c1121f;
+    --primary-light: #f48498;
+    --secondary: #457b9d;
+    --secondary-dark: #1d3557;
+    --secondary-light: #a8dadc;
+    --light: #f1faee;
+    --dark: #1d3557;
+    --gray: #6c757d;
+    --gray-light: #dee2e6;
+    --gray-dark: #343a40;
+    --success: #198754;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --info: #0dcaf0;
+    
+    /* Typography */
+    --font-primary: 'Montserrat', sans-serif;
+    --font-secondary: 'Roboto', sans-serif;
+    
+    /* Effects */
+    --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --box-shadow-hover: 0 10px 20px rgba(0, 0, 0, 0.15);
+    --transition: all 0.2s ease;
+}
+
+/* Reset & Base Styles */
+body {
+    font-family: var(--font-secondary);
+    color: var(--dark);
+    background-color: #f8f9fa;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-primary);
+    font-weight: 600;
+}
+
+/* Link styles */
+a {
+    color: var(--primary);
+    transition: color 0.2s ease;
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--primary-dark);
+} 

@@ -1,0 +1,154 @@
+/* 
+* HEADER.CSS
+* CSS cho header, navbar và navigation 
+*/
+
+/* Navbar styles */
+.main-header {
+    position: relative;
+    z-index: 1030;
+    height: auto;
+    overflow: visible;
+}
+
+.navbar {
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--box-shadow);
+    padding: 0.75rem 0;
+    height: auto;
+}
+
+.navbar.sticky-top {
+    height: auto;
+    position: sticky;
+}
+
+.navbar-brand {
+    font-family: var(--font-primary);
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.navbar-brand:hover {
+    color: var(--primary-dark);
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.brand-text .subtitle {
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+/* Logo container */
+.logo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Navigation Items */
+.nav-item {
+    margin: 0 0.25rem;
+}
+
+.nav-link {
+    font-weight: 500;
+    color: var(--dark);
+    position: relative;
+    padding: 0.5rem 0.75rem;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--primary);
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: 0;
+    left: 50%;
+    background-color: var(--primary);
+    transition: var(--transition);
+    transform: translateX(-50%);
+}
+
+.nav-link:hover::after, .nav-link.active::after {
+    width: 70%;
+}
+
+/* Dropdown specific */
+.nav-item.dropdown {
+    position: relative !important;
+}
+
+.nav-link.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.navbar .dropdown-toggle::after {
+    vertical-align: middle;
+    margin-left: 0.2em;
+    font-size: 0.8em;
+}
+
+/* Custom styles for navbar dropdown */
+.navbar .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    left: auto;
+    margin-top: 0.3rem;
+    transform: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.navbar .dropdown-menu h6 {
+    font-size: 0.9rem;
+}
+
+.navbar .dropdown-menu .py-1 {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Search form in navbar */
+.search-container {
+    max-width: 500px;
+    width: 100%;
+}
+
+@media (max-width: 992px) {
+    .search-container {
+        display: none;
+    }
+    
+    .navbar-brand .subtitle {
+        display: none;
+    }
+}
+
+/* Cart button */
+.btn-cart {
+    position: relative;
+    padding-right: 2.5rem !important;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+} 

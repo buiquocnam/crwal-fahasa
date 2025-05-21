@@ -1,90 +1,31 @@
-<div class="mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0 fw-bold d-flex align-items-center">
-            <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>
-            <span>Danh Mục Phổ Biến</span>
-            <span class="badge bg-primary rounded-pill ms-2 animate__animated animate__fadeIn" style="font-size: 0.75rem; padding: 0.35rem 0.65rem;">{{ categories|length }}</span>
-        </h2>
+{% import "utils.html" as utils %}
+
+<section>
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h2 class="section-title fw-bold mb-0">
+                    <i class="bi bi-grid-3x3-gap me-2 text-primary"></i>
+                    Danh Mục Sách
+                </h2>
+                <a href="/categories" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-grid-3x3-gap me-1"></i> Xem tất cả
+                </a>
+            </div>
+        </div>
     </div>
 
-    {% if categories %}
-    <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-4">
-        {% for category in categories %}
-        <div class="col">
-            {% set icon_class = "bi-journal-text" %}
-            {% set cat_color_class = "" %}
-            {% set cat_bg_class = "bg-cat-default" %}
-            
-            {% if "kinh-te-chinh-tri-phap-ly" in category.lower() %}
-                {% set icon_class = "bi-graph-up-arrow" %}
-                {% set category_vi = "Kinh Tế - Chính Trị" %}
-                {% set cat_color_class = "text-cat-economics" %}
-                {% set cat_bg_class = "bg-cat-economics" %}
-            {% elif "van-hoc-trong-nuoc" in category.lower() %}
-                {% set icon_class = "bi-book" %}
-                {% set category_vi = "Văn Học Trong Nước" %}
-                {% set cat_color_class = "text-cat-literature" %}
-                {% set cat_bg_class = "bg-cat-literature" %}
-            {% elif "van-hoc-nuoc-ngoai" in category.lower() %}
-                {% set icon_class = "bi-translate" %}
-                {% set category_vi = "Văn Học Nước Ngoài" %}
-                {% set cat_color_class = "text-cat-foreign" %}
-                {% set cat_bg_class = "bg-cat-foreign" %}
-            {% elif "thieu-nhi" in category.lower() or "children" in category.lower() %}
-                {% set icon_class = "bi-emoji-smile" %}
-                {% set category_vi = "Sách Thiếu Nhi" %}
-                {% set cat_color_class = "text-cat-children" %}
-                {% set cat_bg_class = "bg-cat-children" %}
-            {% elif "tam-ly-ky-nang-song" in category.lower() or "psychology" in category.lower() %}
-                {% set icon_class = "bi-heart" %}
-                {% set category_vi = "Tâm Lý - Kỹ Năng Sống" %}
-                {% set cat_color_class = "text-cat-psychology" %}
-                {% set cat_bg_class = "bg-cat-psychology" %}
-            {% elif "giao-khoa-tham-khao" in category.lower() or "textbook" in category.lower() %}
-                {% set icon_class = "bi-journal-bookmark" %}
-                {% set category_vi = "Giáo Khoa - Tham Khảo" %}
-                {% set cat_color_class = "text-cat-education" %}
-                {% set cat_bg_class = "bg-cat-education" %}
-            {% elif "manga-truyen-tranh" in category.lower() or "comic" in category.lower() %}
-                {% set icon_class = "bi-images" %}
-                {% set category_vi = "Manga - Truyện Tranh" %}
-                {% set cat_color_class = "text-cat-manga" %}
-                {% set cat_bg_class = "bg-cat-manga" %}
-            {% elif "sach-teen" in category.lower() %}
-                {% set icon_class = "bi-stars" %}
-                {% set category_vi = "Sách Teen" %}
-                {% set cat_color_class = "text-cat-teen" %}
-                {% set cat_bg_class = "bg-cat-teen" %}
-            {% else %}
-                {% set category_vi = category %}
-            {% endif %}
-            
-            <a href="/search?category={{ category }}" class="text-decoration-none">
-                <div class="card h-100 border-0 shadow-sm category-card hover-shadow {{ cat_bg_class }}">
-                    <div class="card-body p-4">
-                        <div class="category-icon mb-3">
-                            <i class="bi {{ icon_class }} fs-1 {{ cat_color_class }}"></i>
-                        </div>
-                        <h5 class="card-title fw-bold mb-3 {{ cat_color_class }}">{{ category_vi }}</h5>
-                        <p class="card-text text-muted">Khám phá tất cả sách thuộc danh mục này</p>
-                        <div class="mt-3">
-                            <span class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-search me-1"></i>Xem sách
-                            </span>
-                        </div>
-                    </div>
+    <div class="row">
+        {% if categories %}
+            {% for category in categories %}
+                {{ utils.render_category_card(category) }}
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i> Không có danh mục nào được tìm thấy.
                 </div>
-            </a>
-        </div>
-        {% endfor %}
+            </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="alert alert-info d-flex align-items-center p-4" role="alert">
-        <i class="bi bi-info-circle-fill fs-3 me-3 flex-shrink-0"></i>
-        <div>
-            <h5 class="alert-heading mb-1">Không có danh mục nào</h5>
-            <p class="mb-0">Hiện tại chưa có danh mục sách nào được cập nhật.</p>
-        </div>
-    </div>
-    {% endif %}
-</div> 
+</section> 

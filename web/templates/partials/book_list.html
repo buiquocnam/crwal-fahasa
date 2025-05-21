@@ -22,9 +22,9 @@
         </div>
     </div>
     
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+    <div class="books-grid">
         {% for book in books %}
-            <div class="col">
+            <div class="book-card-wrapper">
                 {% include 'partials/book_card.html' %}
             </div>
         {% endfor %}

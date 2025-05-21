@@ -1,0 +1,26 @@
+/* 
+* STYLE.CSS
+* Main stylesheet that imports all modular CSS files
+*/
+
+/* Import base styles with variables and reset */
+@import url('./base.css');
+
+/* Import layout styles */
+@import url('./layout.css');
+
+/* Import component styles */
+@import url('./components.css');
+
+/* Import specific section styles */
+@import url('./header.css');
+@import url('./hero.css');
+@import url('./book-card.css');
+@import url('./book-details.css');
+@import url('./footer.css');
+
+/* Import animations */
+@import url('./animations.css');
+
+/* Import responsive styles (should be last) */
+@import url('./responsive.css'); 

@@ -1,0 +1,125 @@
+{% macro get_category_icon(category) -%}
+    {% set icon = "bi-journal-text" %}
+    
+    {% if "kinh-te-chinh-tri-phap-ly" in category|string|lower() %}
+        {% set icon = "bi-graph-up-arrow" %}
+    {% elif "van-hoc-trong-nuoc" in category|string|lower() %}
+        {% set icon = "bi-book" %}
+    {% elif "van-hoc-nuoc-ngoai" in category|string|lower() %}
+        {% set icon = "bi-translate" %}
+    {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
+        {% set icon = "bi-emoji-smile" %}
+    {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
+        {% set icon = "bi-heart" %}
+    {% elif "giao-khoa-tham-khao" in category|string|lower() or "textbook" in category|string|lower() %}
+        {% set icon = "bi-journal-bookmark" %}
+    {% elif "manga-truyen-tranh" in category|string|lower() or "comic" in category|string|lower() %}
+        {% set icon = "bi-images" %}
+    {% elif "sach-teen" in category|string|lower() %}
+        {% set icon = "bi-stars" %}
+    {% endif %}
+    
+    {{ icon }}
+{%- endmacro %}
+
+{% macro get_category_color(category) -%}
+    {% set color = "" %}
+    
+    {% if "kinh-te-chinh-tri-phap-ly" in category|string|lower() %}
+        {% set color = "text-cat-economics" %}
+    {% elif "van-hoc-trong-nuoc" in category|string|lower() %}
+        {% set color = "text-cat-literature" %}
+    {% elif "van-hoc-nuoc-ngoai" in category|string|lower() %}
+        {% set color = "text-cat-foreign" %}
+    {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
+        {% set color = "text-cat-children" %}
+    {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
+        {% set color = "text-cat-psychology" %}
+    {% elif "giao-khoa-tham-khao" in category|string|lower() or "textbook" in category|string|lower() %}
+        {% set color = "text-cat-education" %}
+    {% elif "manga-truyen-tranh" in category|string|lower() or "comic" in category|string|lower() %}
+        {% set color = "text-cat-manga" %}
+    {% elif "sach-teen" in category|string|lower() %}
+        {% set color = "text-cat-teen" %}
+    {% endif %}
+    
+    {{ color }}
+{%- endmacro %}
+
+{% macro get_category_bg(category) -%}
+    {% set bg = "bg-cat-default" %}
+    
+    {% if "kinh-te-chinh-tri-phap-ly" in category|string|lower() %}
+        {% set bg = "bg-cat-economics" %}
+    {% elif "van-hoc-trong-nuoc" in category|string|lower() %}
+        {% set bg = "bg-cat-literature" %}
+    {% elif "van-hoc-nuoc-ngoai" in category|string|lower() %}
+        {% set bg = "bg-cat-foreign" %}
+    {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
+        {% set bg = "bg-cat-children" %}
+    {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
+        {% set bg = "bg-cat-psychology" %}
+    {% elif "giao-khoa-tham-khao" in category|string|lower() or "textbook" in category|string|lower() %}
+        {% set bg = "bg-cat-education" %}
+    {% elif "manga-truyen-tranh" in category|string|lower() or "comic" in category|string|lower() %}
+        {% set bg = "bg-cat-manga" %}
+    {% elif "sach-teen" in category|string|lower() %}
+        {% set bg = "bg-cat-teen" %}
+    {% endif %}
+    
+    {{ bg }}
+{%- endmacro %}
+
+{% macro get_category_name(category) -%}
+    {% set name = category %}
+    
+    {% if "kinh-te-chinh-tri-phap-ly" in category|string|lower() %}
+        {% set name = "Kinh Tế - Chính Trị" %}
+    {% elif "van-hoc-trong-nuoc" in category|string|lower() %}
+        {% set name = "Văn Học Trong Nước" %}
+    {% elif "van-hoc-nuoc-ngoai" in category|string|lower() %}
+        {% set name = "Văn Học Nước Ngoài" %}
+    {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
+        {% set name = "Sách Thiếu Nhi" %}
+    {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
+        {% set name = "Tâm Lý - Kỹ Năng Sống" %}
+    {% elif "giao-khoa-tham-khao" in category|string|lower() or "textbook" in category|string|lower() %}
+        {% set name = "Giáo Khoa - Tham Khảo" %}
+    {% elif "manga-truyen-tranh" in category|string|lower() or "comic" in category|string|lower() %}
+        {% set name = "Manga - Truyện Tranh" %}
+    {% elif "sach-teen" in category|string|lower() %}
+        {% set name = "Sách Teen" %}
+    {% endif %}
+    
+    {{ name }}
+{%- endmacro %}
+
+{% macro render_category_icon(category) -%}
+    <i class="bi {{ get_category_icon(category) }} {{ get_category_color(category) }} me-2"></i>
+{%- endmacro %}
+
+{% macro render_category_name(category) -%}
+    {{ get_category_name(category) }}
+{%- endmacro %}
+
+{% macro render_category_card(category) %}
+    <div class="col-md-4 col-lg-3 mb-4">
+        <a href="/search?category={{ category }}" class="text-decoration-none">
+            <div class="card category-card hover-shadow h-100 {{ get_category_bg(category) }}">
+                <div class="card-body text-center py-4">
+                    <div class="category-icon mb-3 {{ get_category_color(category) }}">
+                        <i class="bi {{ get_category_icon(category) }} fs-4"></i>
+                    </div>
+                    <h5 class="card-title fw-bold mb-0">{{ get_category_name(category) }}</h5>
+                </div>
+            </div>
+        </a>
+    </div>
+{% endmacro %}
+
+{% macro render_category_badge(category) %}
+    <span class="badge {{ get_category_bg(category) }} {{ get_category_color(category) }} rounded-pill">
+        <i class="bi {{ get_category_icon(category) }} me-1"></i>
+        {{ get_category_name(category) }}
+    </span>
+{% endmacro %} 
