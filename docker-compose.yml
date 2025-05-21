@@ -24,6 +24,7 @@ services:
       context: .
       dockerfile: data_crawling/Dockerfile
     container_name: crawler
+    image: 5ae_fahasa_crawler:latest
     volumes:
       - ./data:/app/data
       - ./data_crawling:/app/data_crawling
@@ -51,6 +52,7 @@ services:
       context: .
       dockerfile: database_api/Dockerfile
     container_name: fahasa_api
+    image: 5ae_fahasa_api:latest
     ports:
       - "8001:8000"
     networks:
@@ -74,6 +76,7 @@ services:
       context: .
       dockerfile: data_ingestion/Dockerfile
     container_name: ingestion
+    image: 5ae_fahasa_ingestion:latest
     volumes:
       - ./data:/app/data
       - ./data_ingestion:/app/data_ingestion
@@ -99,6 +102,7 @@ services:
       context: .
       dockerfile: web/Dockerfile
     container_name: fahasa_web
+    image: 5ae_fahasa_web:latest
     volumes:
       - ./web:/app/web
       - ./static:/app/static

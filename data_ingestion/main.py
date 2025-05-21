@@ -34,7 +34,3 @@ async def trigger_ingestion():
 async def get_status():
     """Lấy trạng thái xử lý cuối cùng"""
     return last_run
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
