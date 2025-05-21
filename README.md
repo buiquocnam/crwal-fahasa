@@ -1,250 +1,150 @@
-# Fahasa Book Data Crawler và API
+# 📚 Hệ Thống Thu Thập và Hiển Thị Dữ Liệu Sách Fahasa
 
-Dự án này xây dựng hệ thống thu thập dữ liệu từ Fahasa.com (trang thương mại điện tử sách tại Việt Nam), lưu trữ vào PostgreSQL, cung cấp API để truy vấn dữ liệu, và giao diện web để tìm kiếm sách.
+Dự án này xây dựng hệ thống hoàn chỉnh để thu thập dữ liệu sách từ Fahasa.com, lưu trữ vào cơ sở dữ liệu PostgreSQL, cung cấp API truy vấn dữ liệu, và giao diện web thân thiện để người dùng tìm kiếm và khám phá sách.
 
-## Kiến trúc hệ thống
+## 🏗️ Kiến trúc hệ thống
 
-![Fahasa Crawler Architecture](https://i.imgur.com/nCkRdUh.png)
+![Fahasa System Architecture](https://i.imgur.com/nCkRdUh.png)
 
-Hệ thống bao gồm các thành phần sau:
-- **Crawler**: Thu thập dữ liệu sách từ Fahasa.com
-- **Landing Zone (JSON Files)**: Lưu trữ tạm thời dữ liệu crawl trong file JSON
-- **Ingestion**: Đọc dữ liệu từ JSON và nhập vào PostgreSQL
-- **PostgreSQL Database**: Lưu trữ dữ liệu sách
-- **API**: Cung cấp endpoints REST API để truy vấn dữ liệu
-- **Web UI**: Giao diện người dùng để tìm kiếm sách
-- **Nginx**: API Gateway và reverse proxy
+Hệ thống bao gồm 5 thành phần chính:
 
-## Flow hoạt động
+1. **🕷️ Crawler Service**: Thu thập dữ liệu sách từ Fahasa.com
+2. **🔄 Ingestion Service**: Xử lý và nhập dữ liệu vào PostgreSQL
+3. **🚀 API Service**: Cung cấp REST API để truy vấn dữ liệu sách
+4. **🖥️ Web UI**: Giao diện người dùng để tìm kiếm và duyệt sách
+5. **🔀 Nginx**: API Gateway và reverse proxy cho hệ thống
 
-1. **Crawler** thu thập dữ liệu từ Fahasa.com:
-   - Truy cập nhiều URL từ Fahasa.com cho các danh mục sách khác nhau:
-     - Văn học trong nước: `https://www.fahasa.com/sach-trong-nuoc/van-hoc-trong-nuoc.html`
-     - Kinh tế: `https://www.fahasa.com/sach-trong-nuoc/kinh-te-chinh-tri-phap-ly.html`
-     - Tâm lý - Kỹ năng sống: `https://www.fahasa.com/sach-trong-nuoc/tam-ly-ky-nang-song.html`
-     - Nuôi dạy con: `https://www.fahasa.com/sach-trong-nuoc/nuoi-day-con.html`
-     - Sách học ngoại ngữ: `https://www.fahasa.com/sach-trong-nuoc/sach-hoc-ngoai-ngu.html`
-   - Thu thập thông tin sách: tên, tác giả, giá, giá gốc, phần trăm giảm giá, URL sách, URL ảnh, danh mục
-   - Lưu dữ liệu vào các file JSON trong thư mục `/data`, cả dạng riêng lẻ theo danh mục và tổng hợp
-
-2. **Ingestion** xử lý dữ liệu:
-   - Đợi Crawler thu thập dữ liệu xong
-   - Đọc dữ liệu từ file JSON
-   - Tạo schema trong PostgreSQL nếu chưa tồn tại
-   - Chuẩn hóa dữ liệu trước khi nhập
-   - Nhập dữ liệu vào bảng `books` (bao gồm thông tin danh mục)
-
-3. **API** (FastAPI) cung cấp endpoints:
-   - `/books` - Lấy danh sách sách với phân trang và lọc theo danh mục
-   - `/books/{id}` - Lấy thông tin chi tiết của một sách
-   - `/books/search/title` - Tìm kiếm sách theo tiêu đề
-   - `/books/search/author` - Tìm kiếm sách theo tác giả
-   - `/books/search/category` - Tìm kiếm sách theo danh mục
-
-4. **Web UI** hiển thị giao diện:
-   - Trang chủ có form tìm kiếm
-   - Hiển thị kết quả tìm kiếm với hình ảnh, giá, tác giả
-   - Hỗ trợ phân trang kết quả
-
-5. **Nginx** làm API Gateway:
-   - Proxy trực tiếp đến endpoint `/books/*`
-   - Chuyển tiếp tất cả các request khác đến API service
-
-## Quy trình khởi chạy
-
-Khi khởi động bằng `docker-compose up`, các container sẽ khởi động theo thứ tự:
-
-1. **PostgreSQL** khởi động trước (với healthcheck)
-2. **Crawler** bắt đầu thu thập dữ liệu (đợi PostgreSQL healthy)
-3. **Ingestion** đợi Crawler hoàn thành và đưa dữ liệu vào PostgreSQL
-4. **API** khởi động (đợi PostgreSQL healthy)
-5. **Web UI** khởi động (đợi API sẵn sàng, tùy cấu hình)
-6. **Nginx** làm API Gateway (đợi API sẵn sàng)
-
-## Luồng dữ liệu
+## ⚙️ Luồng hoạt động
 
 ```
-Fahasa Website -> Crawler -> JSON Files -> Ingestion -> PostgreSQL -> API -> [Nginx] -> User
+Luồng dữ liệu: Fahasa Website → Crawler → JSON Files → Ingestion → PostgreSQL → API
+Luồng người dùng: User → Nginx → [Web UI / API] → PostgreSQL
 ```
 
-## Cách chạy hệ thống
+1. **Crawler**:
+   - Thu thập dữ liệu từ nhiều danh mục sách
+   - Xử lý đa luồng cho hiệu suất cao
+   - Lưu trữ dữ liệu vào các file JSON
 
-1. Đảm bảo Docker và Docker Compose đã được cài đặt
-2. Mở terminal tại thư mục dự án
-3. Chạy lệnh: `docker-compose up --build`
-4. Đợi tất cả các container khởi động hoàn tất
+2. **Ingestion**:
+   - Nhận thông báo từ Crawler khi có dữ liệu mới
+   - Đọc, xác thực và chuẩn hóa dữ liệu
+   - Nhập dữ liệu vào PostgreSQL
 
-## Cách truy cập API
+3. **API**:
+   - Cung cấp endpoints để truy vấn dữ liệu
+   - Hỗ trợ tìm kiếm theo tiêu đề, tác giả, danh mục
+   - Phân trang và lọc kết quả
 
-### API Endpoints:
-- API qua Nginx (proxy): `http://localhost:8080/books/`
-- API trực tiếp tới container: `http://localhost:8001/books`
+4. **Nginx**:
+   - Hoạt động như API Gateway
+   - Chuyển tiếp yêu cầu đến các dịch vụ phù hợp
+   - Cung cấp layer bảo mật và load balancing
 
-### Các tham số truy vấn:
-- Lấy sách phân trang: `/books?limit=10&offset=20`
-- Lọc theo danh mục: `/books?category=van-hoc-trong-nuoc&limit=10` 
-- Tìm kiếm theo tiêu đề: `/books/search/title?keyword=kim&limit=10`
-- Tìm kiếm theo tác giả: `/books/search/author?keyword=nguyen&limit=10`
-- Tìm kiếm theo danh mục: `/books/search/category?category=kinh-te&limit=10`
+5. **Web UI**:
+   - Giao diện thân thiện, responsive
+   - Tìm kiếm và duyệt sách dễ dàng
+   - Hiển thị thông tin chi tiết về sách
 
-### Ví dụ các API call:
-1. Lấy 10 sách đầu tiên:
-   ```
-   GET http://localhost:8080/books/?limit=10&offset=0
-   ```
+## 🚀 Cách chạy hệ thống
 
-2. Lấy chi tiết sách có ID=1:
-   ```
-   GET http://localhost:8080/books/1
-   ```
+### Yêu cầu tiên quyết
+- Docker và Docker Compose
+- Kết nối internet (để crawler lấy dữ liệu)
 
-3. Tìm kiếm sách có tiêu đề chứa từ "kim":
-   ```
-   GET http://localhost:8080/books/search/title?keyword=kim&limit=10&offset=0
-   ```
+### Khởi động toàn bộ hệ thống
+```bash
+docker-compose up --build
+```
 
-4. Tìm kiếm sách của tác giả có tên chứa "nguyen":
-   ```
-   GET http://localhost:8080/books/search/author?keyword=nguyen&limit=10&offset=0
-   ```
+### Truy cập các dịch vụ
+- **Web UI**: http://localhost:8000
+- **API (qua Nginx)**: http://localhost:8080/books
+- **API (trực tiếp)**: http://localhost:8001/books
+- **Crawler API**: http://localhost:8002
+- **Ingestion API**: http://localhost:8003
 
-5. Tìm kiếm sách thuộc danh mục "kinh-te":
-   ```
-   GET http://localhost:8080/books/search/category?category=kinh-te&limit=10&offset=0
-   ```
+## 🔍 Các danh mục sách hỗ trợ
 
-6. Kết hợp tìm kiếm theo tác giả và lọc theo danh mục:
-   ```
-   GET http://localhost:8080/books/search/author?keyword=nguyen&category=van-hoc-trong-nuoc&limit=10
-   ```
+Hệ thống thu thập dữ liệu từ các danh mục sách sau:
 
-## Danh sách danh mục sách
-Hệ thống hiện hỗ trợ các danh mục sách sau:
 - `van-hoc-trong-nuoc`: Văn học trong nước
 - `kinh-te`: Kinh tế - Chính trị - Pháp lý
 - `tam-ly-ky-nang-song`: Tâm lý - Kỹ năng sống
 - `nuoi-day-con`: Nuôi dạy con
 - `sach-hoc-ngoai-ngu`: Sách học ngoại ngữ
 
-## Tài liệu chi tiết các thành phần
+## 📡 API Endpoints
 
-Mỗi thành phần của hệ thống đều có tài liệu riêng mô tả chi tiết:
-
-- **Crawler**: [crawler/README.md](crawler/README.md) - Mô tả quy trình thu thập dữ liệu
-- **Ingestion**: [ingestion/README.md](ingestion/README.md) - Mô tả quy trình nhập dữ liệu vào PostgreSQL
-- **API**: [api/README.md](api/README.md) - Mô tả các endpoints và cách sử dụng API
-- **Nginx**: [nginx.conf.README.md](nginx.conf.README.md) - Mô tả cấu hình và vai trò của Nginx
-
-## Cấu trúc dự án
-
+### 1. Lấy danh sách sách
 ```
-fahasa_crawler/
-├── crawler/                 # Mã nguồn crawler
-│   ├── crawler.py           # Script crawl dữ liệu
-│   ├── README.md            # Tài liệu mô tả crawler
-│   └── requirements.txt     # Thư viện Python cần thiết
-├── ingestion/               # Mã nguồn ingestion
-│   ├── ingestion.py         # Script nhập dữ liệu vào PostgreSQL
-│   ├── README.md            # Tài liệu mô tả ingestion
-│   └── requirements.txt     # Thư viện Python cần thiết
-├── api/                     # Mã nguồn API
-│   ├── config.py            # Cấu hình và hằng số
-│   ├── database.py          # Xử lý kết nối database
-│   ├── main.py              # Entry point của FastAPI app
-│   ├── models.py            # Pydantic models
-│   ├── books.py             # Routers và endpoints
-│   ├── README.md            # Tài liệu mô tả API
-│   └── requirements.txt     # Thư viện Python cần thiết  
-├── web/                     # Mã nguồn Web UI
-│   ├── web.py               # Flask application
-│   ├── templates/           # HTML templates
-│   │   └── index.html       # Trang chủ có form tìm kiếm
-│   └── requirements.txt     # Thư viện Python cần thiết
-├── data/                    # Thư mục lưu dữ liệu JSON (tạo tự động)
-├── Dockerfile.crawler       # Dockerfile cho crawler
-├── Dockerfile.ingestion     # Dockerfile cho ingestion  
-├── Dockerfile.api           # Dockerfile cho API
-├── Dockerfile.web           # Dockerfile cho web UI
-├── docker-compose.yml       # Cấu hình Docker Compose
-├── nginx.conf               # Cấu hình Nginx API Gateway
-├── nginx.conf.README.md     # Tài liệu mô tả Nginx
-└── README.md                # File này
+GET /books/?limit=10&page=1
 ```
 
-## Gỡ lỗi và khắc phục sự cố
+### 2. Lấy chi tiết sách
+```
+GET /books/{book_id}
+```
 
-### Vấn đề kết nối Nginx-API
-Nếu gặp lỗi 500 khi truy cập qua Nginx:
-- Kiểm tra logs: `docker-compose logs -f nginx`
-- Kiểm tra kết nối API: `docker-compose logs -f api`
-- Đảm bảo mạng Docker hoạt động: `docker network inspect fahasa_network`
+### 3. Tìm kiếm sách
+```
+GET /books/?title=nhà giả kim&limit=10&page=1
+GET /books/?author=paulo&limit=10&page=1
+GET /books/?category=van-hoc-trong-nuoc&limit=10&page=1
+```
+
+### 4. Lấy danh sách danh mục
+```
+GET /books/categories/list
+```
+
+## 📂 Cấu trúc dự án
+
+```
+project/
+├── data_crawling/        # Thu thập dữ liệu từ Fahasa
+├── data_ingestion/       # Nhập dữ liệu vào PostgreSQL
+├── database_api/         # API truy vấn dữ liệu
+├── web/                  # Giao diện người dùng
+├── data/                 # Thư mục lưu dữ liệu JSON (tạo tự động)
+├── docker-compose.yml    # Cấu hình Docker Compose
+├── nginx.conf            # Cấu hình Nginx API Gateway
+└── README.md             # Tài liệu này
+```
+
+## 📄 Tài liệu chi tiết các thành phần
+
+Mỗi thành phần đều có tài liệu riêng chi tiết:
+
+- [**🕷️ Dịch vụ Crawler**](data_crawling/README.md): Thu thập dữ liệu sách từ Fahasa
+- [**🔄 Dịch vụ Ingestion**](data_ingestion/README.md): Nhập dữ liệu vào cơ sở dữ liệu
+- [**🚀 API Service**](database_api/README.md): Cung cấp REST API
+- [**🖥️ Web UI**](web/README.md): Giao diện người dùng
+
+## 🛠️ Gỡ lỗi và khắc phục sự cố
+
+### Vấn đề Crawler
+- Kiểm tra logs: `docker-compose logs data_crawling`
+- Truy cập API: `http://localhost:8002/`
+
+### Vấn đề Ingestion
+- Kiểm tra logs: `docker-compose logs data_ingestion`
+- Truy cập API: `http://localhost:8003/`
 
 ### Vấn đề với PostgreSQL
-Nếu API không thể kết nối đến PostgreSQL:
-- Kiểm tra logs PostgreSQL: `docker-compose logs -f postgres`
-- Thử kết nối trực tiếp: `docker exec -it fahasa_postgres psql -U fahasa -d fahasa_db`
+- Kiểm tra logs: `docker-compose logs postgres`
+- Kết nối trực tiếp: `docker exec -it postgres psql -U fahasa -d fahasa_db`
 
-### Lỗi 404 khi truy cập API
-- Đảm bảo URL đúng định dạng (để ý dấu `/` ở cuối URL)
-- Kiểm tra cấu hình Nginx trong file nginx.conf
-- Kiểm tra logs để tìm nguyên nhân: `docker-compose logs -f nginx`
+### Vấn đề với API
+- Kiểm tra logs: `docker-compose logs database_api`
+- Truy cập trực tiếp: `http://localhost:8001/books/`
 
-### Lỗi kết nối từ Web đến API
-- Kiểm tra biến `API_URL` trong file web.py
-- Đảm bảo tất cả services kết nối đến cùng mạng Docker 
-- Xem logs của web: `docker-compose logs -f web`
+### Vấn đề với Nginx
+- Kiểm tra logs: `docker-compose logs nginx`
+- Kiểm tra cấu hình: `cat nginx.conf`
+- Xác minh proxy hoạt động: `curl http://localhost:8080/health`
 
-# Hệ thống Crawler và Ingestion
+### Vấn đề với Web UI
+- Kiểm tra logs: `docker-compose logs web`
+- Kiểm tra kết nối API trong cấu hình
 
-Đây là hệ thống crawler dữ liệu sách từ Fahasa và xử lý (ingestion) dữ liệu vào cơ sở dữ liệu.
-
-## Cơ chế hoạt động
-
-### Mô hình callback giữa Crawler và Ingestion
-
-Hệ thống sử dụng cơ chế callback đơn giản và hiệu quả:
-
-1. **Crawler** thu thập dữ liệu và lưu vào file JSON
-2. Sau khi hoàn thành, **Crawler** gửi HTTP POST đến API của **Ingestion**
-3. **Ingestion** nhận thông báo, xử lý dữ liệu và lưu vào cơ sở dữ liệu
-
-### Cài đặt và chạy
-
-```bash
-# Khởi động toàn bộ hệ thống
-docker-compose up -d
-
-# Kiểm tra trạng thái crawler
-curl http://localhost:8003/status
-
-# Kích hoạt thủ công quá trình crawl
-curl http://localhost:8003/start
-
-# Kiểm tra trạng thái ingestion
-curl http://localhost:8004/status
-```
-
-## Các service chính
-
-### Crawler
-
-- **crawler_api**: API cho phép điều khiển và giám sát crawler
-  - Endpoint: `/start` - Kích hoạt quá trình crawl
-  - Endpoint: `/status` - Xem trạng thái hiện tại
-  - Endpoint: `/notify` - Gửi thủ công callback đến ingestion
-
-- **crawler_scheduler**: Chạy crawler theo lịch định kỳ từ cấu hình
-
-### Ingestion
-
-- API nhận callback từ crawler và xử lý dữ liệu
-  - Endpoint: `/trigger` - Nhận thông báo từ crawler
-  - Endpoint: `/status` - Xem trạng thái của lần xử lý cuối
-
-## Cấu hình môi trường
-
-Các biến môi trường chính:
-
-- `CRAWLER_SOURCE_ID`: Định danh nguồn dữ liệu (mặc định: "fahasa")
-- `INGESTION_CALLBACK_URL`: URL để crawler gửi callback (mặc định: "http://ingestion:8000/trigger")
-- `CRAWLER_CONFIG_PATH`: Đường dẫn đến file cấu hình crawler

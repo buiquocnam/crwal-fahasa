@@ -1,132 +1,83 @@
-# Dịch Vụ Web Fahasa
+# Web Giao Diện Fahasa
 
-Ứng dụng web dựa trên Flask cung cấp giao diện người dùng để duyệt và tìm kiếm sách từ API Fahasa.
+Ứng dụng web Flask cung cấp giao diện người dùng đẹp mắt và thân thiện để tìm kiếm, duyệt và khám phá sách từ API Fahasa.
 
-## Cấu Trúc Dự Án
+## Tính năng chính
+
+- 🔍 **Tìm kiếm đa năng**: Tìm sách theo tên hoặc tác giả với kết quả tức thì
+- 📚 **Duyệt theo danh mục**: Khám phá sách theo danh mục
+- 📖 **Chi tiết sách**: Xem thông tin chi tiết của từng cuốn sách
+- 📱 **Responsive**: Tối ưu hiển thị trên mọi thiết bị
+- 🔄 **Kết nối API**: Tích hợp mượt mà với API Fahasa
+- 🚀 **Hiệu suất cao**: Tải trang nhanh chóng, trải nghiệm mượt mà
+- 🛡️ **Xử lý lỗi**: Hệ thống xử lý lỗi toàn diện
+
+## Công nghệ sử dụng
+
+- **[Flask]**: Framework web nhẹ và linh hoạt
+- **[Bootstrap 5]**: Framework CSS hiện đại
+- **[Requests]**: Thư viện HTTP Python
+- **[Jinja2]**: Template engine mạnh mẽ
+- **[JavaScript]**: Tăng cường trải nghiệm người dùng
+- **[Docker]**: Container hóa ứng dụng
+
+
+## Cấu trúc dự án
 
 ```
 web/
-├── app.py                 # Điểm khởi đầu của ứng dụng
-├── requirements.txt       # Các thư viện Python cần thiết
-├── config/               # Thư mục cấu hình
-│   └── settings.py       # Cài đặt ứng dụng
-├── controllers/          # Controllers
-│   └── book_controller.py # Xử lý các request liên quan đến sách
-├── models/              # Models
-│   └── book.py          # Model dữ liệu sách
-├── utils/               # Các tiện ích
-│   └── api_utils.py     # Các tiện ích liên quan đến API
-└── templates/           # Templates HTML
-    └── index.html       # Template chính
+├── main.py                 # Entry point ứng dụng
+├── requirements.txt        # Thư viện cần thiết
+├── Dockerfile              # Cấu hình Docker
+├── templates/              # Templates HTML
+│   ├── index.html          # Template chính
+│   ├── utils.html          # Hàm tiện ích Jinja
+│   ├── static/             # Tài nguyên tĩnh (CSS, JS, images)
+│   └── partials/           # Các thành phần template
+├── models/                 # Models dữ liệu
+│   └── book.py             # Model Book tương tác với API
+├── controllers/            # Xử lý logic nghiệp vụ
+│   └── book_controller.py  # Điều khiển các tác vụ liên quan đến sách
+├── utils/                  # Tiện ích
+│   └── api_utils.py        # Các hàm tiện ích tương tác API
+└── config/                 # Cấu hình
+    └── settings.py         # Thiết lập ứng dụng
 ```
 
-## Tính Năng
+## Các trang giao diện
 
-- Duyệt tất cả sách với phân trang
-- Tìm kiếm sách theo tiêu đề hoặc tác giả
-- Xem thông tin chi tiết sách
-- Giao diện web responsive
-- Xử lý lỗi và ghi log
+### Trang chủ
+- Hiển thị hero section hấp dẫn
+- Danh sách danh mục phổ biến
+- Danh sách sách mới nhất
+- Form tìm kiếm nổi bật
 
-## Yêu Cầu Hệ Thống
+### Tìm kiếm
+- Tìm kiếm theo tên sách hoặc tác giả
+- Hiển thị kết quả với phân trang
+- Lọc theo danh mục sách
 
-- Python 3.9 trở lên
-- Docker (tùy chọn, cho triển khai container)
+### Chi tiết sách
+- Hiển thị đầy đủ thông tin sách
+- Hình ảnh, giá, tác giả, nhà xuất bản, v.v.
+- Mô tả chi tiết sách
 
-## Cài Đặt
+## API Endpoints được sử dụng
 
-1. Clone repository:
-```bash
-git clone <repository-url>
-cd web
-```
+Ứng dụng giao tiếp với API Fahasa thông qua các endpoints sau:
 
-2. Tạo và kích hoạt môi trường ảo (khuyến nghị):
-```bash
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-```
+- `GET /books`: Lấy danh sách sách với phân trang và lọc
+- `GET /books/{book_id}`: Lấy thông tin chi tiết sách
+- `GET /books/categories/list`: Lấy danh sách danh mục sách
 
-3. Cài đặt các thư viện cần thiết:
-```bash
-pip install -r requirements.txt
-```
+## Các tính năng UI/UX
 
-## Cấu Hình
+- **Hiệu ứng chuyển động**: Sử dụng Animate.css cho các chuyển động mượt mà
+- **Breadcrumb**: Điều hướng dễ dàng giữa các trang
+- **Phân trang**: Điều hướng qua nhiều trang kết quả
+- **Responsive**: Giao diện tối ưu trên điện thoại, máy tính bảng và máy tính
+- **Toast Notifications**: Thông báo với người dùng một cách nhẹ nhàng
+- **Back to Top**: Nút quay về đầu trang khi cuộn xuống
+- **Lịch sử tìm kiếm**: Lưu trữ các từ khóa tìm kiếm gần đây
 
-Ứng dụng có thể được cấu hình thông qua các biến môi trường:
 
-- `API_URL`: URL của API Fahasa (mặc định: "http://fahasa_api:8000")
-- `FLASK_HOST`: Host chạy ứng dụng (mặc định: "0.0.0.0")
-- `FLASK_PORT`: Port chạy ứng dụng (mặc định: 8000)
-- `FLASK_DEBUG`: Chế độ debug (mặc định: False)
-
-## Chạy Ứng Dụng
-
-### Phát Triển Local
-
-```bash
-python app.py
-```
-
-Ứng dụng sẽ có sẵn tại `http://localhost:8000`
-
-### Triển Khai Docker
-
-1. Build Docker image:
-```bash
-docker build -t fahasa-web -f Dockerfile.web .
-```
-
-2. Chạy container:
-```bash
-docker run -p 8000:8000 fahasa-web
-```
-
-## Tích Hợp API
-
-Dịch vụ web tích hợp với API Fahasa thông qua các endpoint sau:
-
-- `GET /books`: Liệt kê tất cả sách với phân trang
-- `GET /books/search/title`: Tìm kiếm sách theo tiêu đề
-- `GET /books/search/author`: Tìm kiếm sách theo tác giả
-- `GET /books/{id}`: Lấy thông tin chi tiết sách theo ID
-
-## Xử Lý Lỗi
-
-Ứng dụng bao gồm xử lý lỗi toàn diện:
-
-- Lỗi kết nối API
-- Tham số tìm kiếm không hợp lệ
-- Dữ liệu sách bị thiếu
-- Lỗi server
-
-Tất cả lỗi được ghi log và hiển thị cho người dùng theo định dạng thân thiện.
-
-## Ghi Log
-
-Ứng dụng sử dụng module logging của Python với cấu hình sau:
-
-- Cấp độ log: INFO
-- Định dạng: `%(asctime)s - %(levelname)s - %(message)s`
-- Đầu ra: Console
-
-## Phát Triển
-
-### Thêm Tính Năng Mới
-
-1. Tạo model mới trong thư mục `models/`
-2. Thêm controller tương ứng trong thư mục `controllers/`
-3. Cập nhật templates trong thư mục `templates/`
-4. Thêm routes mới trong `app.py`
-
-### Kiểm Thử
-
-Để thêm kiểm thử:
-
-1. Tạo file test trong thư mục `tests/`
-2. Sử dụng pytest cho việc kiểm thử
-3. Chạy test với lệnh:
-```bash
-pytest
-```

@@ -1,87 +1,99 @@
-# Fahasa Ingestion Service
+# API Nhập Dữ Liệu Sách Fahasa
 
-Dịch vụ này nhận dữ liệu được crawl từ website Fahasa và nhập vào cơ sở dữ liệu PostgreSQL thông qua API.
+Dịch vụ nhập dữ liệu (data ingestion) này đọc dữ liệu sách từ các file JSON, xác thực, chuẩn hóa và nhập vào cơ sở dữ liệu thông qua API.
 
-## Cấu trúc mã nguồn
+## Tính năng chính
 
-```
-ingestion/
-├── __init__.py             # Package initialization
-├── config/                 # Cấu hình và thiết lập
-│   ├── __init__.py
-│   └── settings.py         # Các hằng số và cấu hình
-├── validation/             # Logic kiểm tra dữ liệu
-│   ├── __init__.py
-│   ├── schema.py           # Định nghĩa schema dữ liệu
-│   └── validator.py        # Hàm xác thực và chuẩn hóa dữ liệu
-├── utils/                  # Tiện ích hỗ trợ
-│   ├── __init__.py
-│   ├── api_client.py       # Tương tác với API
-│   └── data_loader.py      # Tải dữ liệu từ file JSON
-└── main.py                 # Điểm vào chính của ứng dụng
-```
+- 📥 **Nhập dữ liệu tự động**: Tự động đọc và xử lý dữ liệu từ các file JSON
+- ✅ **Xác thực và chuẩn hóa**: Kiểm tra và làm sạch dữ liệu trước khi nhập
+- 🔄 **API Trigger**: Endpoint để kích hoạt quá trình nhập dữ liệu từ xa
+- 📊 **Theo dõi trạng thái**: Endpoint để kiểm tra trạng thái nhập dữ liệu cuối cùng
+- 🩺 **Health check**: Endpoint kiểm tra trạng thái hoạt động của dịch vụ
+- 📝 **Ghi log**: Ghi nhật ký chi tiết toàn bộ quá trình nhập dữ liệu
 
-## Quy trình làm việc
+## Công nghệ sử dụng
 
-1. Dịch vụ khởi động và đợi các file dữ liệu từ crawler
-2. Đọc dữ liệu từ file JSON (ưu tiên file tổng hợp)
-3. Xác thực và chuẩn hóa dữ liệu
-4. Gửi dữ liệu tới API để lưu vào cơ sở dữ liệu
+- **FastAPI**: Framework API hiệu suất cao, dễ sử dụng
+- **Requests**: Thư viện HTTP cho Python để kết nối với API 
+- **JSON5**: Xử lý định dạng JSON mở rộng
+- **Python-dotenv**: Quản lý biến môi trường
+- **PostgreSQL**: Hệ quản trị cơ sở dữ liệu (gián tiếp thông qua API)
 
-## Các Module
-
-### Config
-
-- **settings.py**: Chứa các cấu hình hệ thống như đường dẫn, URL, biểu thức chính quy, và thiết lập logger.
-
-### Validation
-
-- **schema.py**: Định nghĩa cấu trúc dữ liệu sách (trường bắt buộc, tùy chọn, kiểu dữ liệu) và ánh xạ giữa các trường.
-- **validator.py**: Cung cấp các hàm để kiểm tra tính hợp lệ và làm sạch dữ liệu sách.
-
-### Utils
-
-- **data_loader.py**: Xử lý việc đọc dữ liệu từ file JSON và quản lý các file dữ liệu.
-- **api_client.py**: Xử lý giao tiếp với API, hỗ trợ nhập dữ liệu theo lô hoặc từng cuốn.
-
-### Main
-
-- **main.py**: Điều phối toàn bộ quy trình ingestion, từ việc đợi dữ liệu, đọc file, và xử lý đến khi nhập vào database.
-
-## Xử lý lỗi
-
-Hệ thống có một cơ chế xử lý lỗi mạnh mẽ với nhiều cấp độ:
-
-1. Xử lý lỗi khi đọc file JSON
-2. Xác thực và loại bỏ dữ liệu không hợp lệ
-3. Thử sử dụng API batch trước (hiệu suất cao)
-4. Chuyển sang nhập từng cuốn nếu batch thất bại
-5. Ghi log chi tiết ở mỗi bước
-
-## Cách chạy trong Docker
-
-1. Xây dựng image Docker:
-   ```
-   docker build -t fahasa-ingestion -f Dockerfile.ingestion .
-   ```
-
-2. Chạy container:
-   ```
-   docker run fahasa-ingestion
-   ```
-
-## Output mẫu
+## Cấu trúc dự án
 
 ```
-2025-05-12 10:14:10,398 - INFO - Đang đợi file dữ liệu /app/data/fahasa_data.json...
-2025-05-12 10:14:10,398 - INFO - Đã tìm thấy file dữ liệu
-2025-05-12 10:14:10,399 - INFO - Đang đọc dữ liệu từ file JSON...
-2025-05-12 10:14:10,401 - INFO - Đọc thành công 120 sách từ file JSON
-2025-05-12 10:14:10,401 - INFO - Đang kết nối tới PostgreSQL...
-2025-05-12 10:14:10,404 - INFO - Kết nối thành công
-2025-05-12 10:14:10,404 - INFO - Đang tạo schema database...
-2025-05-12 10:14:10,406 - INFO - Schema đã được tạo hoặc đã tồn tại
-2025-05-12 10:14:10,406 - INFO - Đang nhập dữ liệu vào PostgreSQL...
-2025-05-12 10:14:10,450 - INFO - Đã nhập thành công 120 sách vào database
-2025-05-12 10:14:10,450 - INFO - Quá trình nhập dữ liệu hoàn tất
-``` 
+data_ingestion/
+├── main.py                 # Entry point ứng dụng
+├── requirements.txt        # Thư viện cần thiết
+├── Dockerfile              # Cấu hình Docker
+├── src/
+│   ├── config/             # Cấu hình
+│   │   └── settings.py     # Thiết lập ứng dụng
+│   ├── api/                # Tương tác với API
+│   │   └── book_client.py  # Gọi API nhập sách
+│   ├── validation/         # Xác thực dữ liệu
+│   │   ├── schema.py       # Định nghĩa schema
+│   │   └── validator.py    # Logic xác thực
+│   ├── utils/              # Tiện ích
+│   │   └── data_loader.py  # Đọc file JSON
+│   └── ingestion.py        # Logic nhập dữ liệu chính
+```
+
+## API Endpoints
+
+### Health Check (`GET /`)
+- Kiểm tra trạng thái hoạt động của dịch vụ
+- Response: `{"status": "online"}`
+
+### Trigger Ingestion (`POST /trigger`)
+- Kích hoạt quá trình nhập dữ liệu
+- Response: `{"success": true}`
+
+### Get Status (`GET /status`)
+- Lấy trạng thái của lần nhập dữ liệu cuối cùng
+- Response: 
+  ```json
+  {
+    "timestamp": "2023-10-25T12:00:00.123456",
+    "success": true
+  }
+  ```
+
+## Quy trình nhập dữ liệu
+
+1. **Tìm kiếm file dữ liệu**:
+   - Tìm tất cả các file JSON trong thư mục dữ liệu
+
+2. **Đọc và hợp nhất dữ liệu**:
+   - Đọc từng file JSON và hợp nhất dữ liệu
+
+3. **Xác thực và chuẩn hóa**:
+   - Kiểm tra tính hợp lệ của dữ liệu theo schema
+   - Chuẩn hóa dữ liệu trước khi nhập
+
+4. **Xóa dữ liệu hiện có**:
+   - Xóa tất cả sách trong cơ sở dữ liệu thông qua API
+
+5. **Nhập dữ liệu mới**:
+   - Nhập dữ liệu đã được xác thực vào cơ sở dữ liệu thông qua API batch
+
+## Schema dữ liệu sách
+
+```json
+{
+  "required": ["title"],
+  "optional": [
+    "price", "original_price", "discount", "author", "url", "image_url", 
+    "category", "product_code", "supplier", "publisher", "publish_year", 
+    "weight", "dimensions", "page_count", "cover_type", "description", "language"
+  ]
+}
+```
+
+Chỉ có trường `title` là bắt buộc, các trường khác là tùy chọn.
+
+## Kết nối với API Database
+
+Dịch vụ này kết nối với API Database (mặc định là `http://api:8000`) để thực hiện các thao tác sau:
+- **Xóa tất cả sách**: `DELETE /books/deleteAll`
+- **Nhập sách hàng loạt**: `POST /books/batch`
