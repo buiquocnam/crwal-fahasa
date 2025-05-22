@@ -50,10 +50,8 @@ class BookController:
         limit = request.args.get('limit', 15, type=int)
         category = request.args.get('category', None)
         
-        # Kiểm tra nếu không có từ khóa tìm kiếm và không có category
-        if not keyword and not category and page == 1:
-            # Chuyển hướng về trang chủ với thông báo
-            return redirect(url_for('index', error='Vui lòng nhập từ khóa tìm kiếm'))
+        # Bỏ đoạn kiểm tra và redirect khi không có từ khóa/category
+        # JavaScript sẽ xử lý thông báo toast
         
         # Lấy dữ liệu sách từ API thống nhất
         data = self.book_model.get_books(

@@ -30,11 +30,13 @@ function setupSearchForm() {
             const keyword = keywordInput?.value?.trim();
             
             if (!keyword) {
-                // Hiển thị thông báo lỗi với Toast
-                if (typeof Toast !== 'undefined') {
-                    Toast.error("Vui lòng nhập từ khóa tìm kiếm", "Lỗi tìm kiếm");
+                // Hiển thị thông báo lỗi chỉ sử dụng Toast
+                if (typeof showErrorToast === 'function') {
+                    showErrorToast("Vui lòng nhập từ khóa tìm kiếm");
+                } else if (typeof showToast === 'function') {
+                    showToast("Vui lòng nhập từ khóa tìm kiếm", "error");
                 } else {
-                    alert("Vui lòng nhập từ khóa tìm kiếm");
+                    console.error("Vui lòng nhập từ khóa tìm kiếm");
                 }
                 
                 // Hiệu ứng rung cho input
@@ -106,11 +108,17 @@ function setupSearchForm() {
                     
                     // Hiển thị thông báo thành công nếu có kết quả
                     const items = resultContainer.querySelectorAll('.book-card');
-                    if (typeof Toast !== 'undefined') {
-                        if (items.length > 0) {
-                            Toast.success(`Đã tìm thấy ${items.length} kết quả cho "${keyword}"`);
-                        } else {
-                            Toast.warning(`Không tìm thấy kết quả nào cho "${keyword}"`);
+                    if (items.length > 0) {
+                        if (typeof showSuccessToast === 'function') {
+                            showSuccessToast(`Đã tìm thấy ${items.length} kết quả cho "${keyword}"`);
+                        } else if (typeof showToast === 'function') {
+                            showToast(`Đã tìm thấy ${items.length} kết quả cho "${keyword}"`, "success");
+                        }
+                    } else {
+                        if (typeof showErrorToast === 'function') {
+                            showErrorToast(`Không tìm thấy kết quả nào cho "${keyword}"`);
+                        } else if (typeof showToast === 'function') {
+                            showToast(`Không tìm thấy kết quả nào cho "${keyword}"`, "error");
                         }
                     }
                 })
@@ -124,8 +132,10 @@ function setupSearchForm() {
                     `;
                     
                     // Hiển thị thông báo lỗi
-                    if (typeof Toast !== 'undefined') {
-                        Toast.error("Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.");
+                    if (typeof showErrorToast === 'function') {
+                        showErrorToast("Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.");
+                    } else if (typeof showToast === 'function') {
+                        showToast("Đã xảy ra lỗi khi tìm kiếm. Vui lòng thử lại.", "error");
                     }
                 });
         });
@@ -139,6 +149,15 @@ function setupSearchForm() {
             const urlParams = new URLSearchParams(window.location.search);
             const keyword = urlParams.get('keyword');
             const searchType = urlParams.get('search_type') || 'title';
+            
+            // Kiểm tra URL hiện tại
+            const isHomePage = window.location.pathname === '/' && !keyword;
+            
+            if (isHomePage) {
+                // Nếu là trang chủ (/) và không có từ khóa, làm mới toàn bộ trang
+                window.location.reload();
+                return;
+            }
             
             if (keyword) {
                 // Cập nhật input tìm kiếm

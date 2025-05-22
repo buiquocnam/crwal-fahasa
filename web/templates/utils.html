@@ -5,18 +5,12 @@
         {% set icon = "bi-graph-up-arrow" %}
     {% elif "van-hoc-trong-nuoc" in category|string|lower() %}
         {% set icon = "bi-book" %}
-    {% elif "van-hoc-nuoc-ngoai" in category|string|lower() %}
+    {% elif "sach-hoc-ngoai-ngu" in category|string|lower() %}
         {% set icon = "bi-translate" %}
-    {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
+    {% elif "nuoi-day-con" in category|string|lower() or "children" in category|string|lower() %}
         {% set icon = "bi-emoji-smile" %}
     {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
         {% set icon = "bi-heart" %}
-    {% elif "giao-khoa-tham-khao" in category|string|lower() or "textbook" in category|string|lower() %}
-        {% set icon = "bi-journal-bookmark" %}
-    {% elif "manga-truyen-tranh" in category|string|lower() or "comic" in category|string|lower() %}
-        {% set icon = "bi-images" %}
-    {% elif "sach-teen" in category|string|lower() %}
-        {% set icon = "bi-stars" %}
     {% endif %}
     
     {{ icon }}
@@ -29,18 +23,12 @@
         {% set color = "text-cat-economics" %}
     {% elif "van-hoc-trong-nuoc" in category|string|lower() %}
         {% set color = "text-cat-literature" %}
-    {% elif "van-hoc-nuoc-ngoai" in category|string|lower() %}
+    {% elif "sach-hoc-ngoai-ngu" in category|string|lower() %}
         {% set color = "text-cat-foreign" %}
-    {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
-        {% set color = "text-cat-children" %}
     {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
         {% set color = "text-cat-psychology" %}
-    {% elif "giao-khoa-tham-khao" in category|string|lower() or "textbook" in category|string|lower() %}
-        {% set color = "text-cat-education" %}
-    {% elif "manga-truyen-tranh" in category|string|lower() or "comic" in category|string|lower() %}
-        {% set color = "text-cat-manga" %}
-    {% elif "sach-teen" in category|string|lower() %}
-        {% set color = "text-cat-teen" %}
+    {% elif "nuoi-day-con" in category|string|lower() or "children" in category|string|lower() %}
+        {% set color = "text-cat-children" %}
     {% endif %}
     
     {{ color }}
@@ -53,20 +41,13 @@
         {% set bg = "bg-cat-economics" %}
     {% elif "van-hoc-trong-nuoc" in category|string|lower() %}
         {% set bg = "bg-cat-literature" %}
-    {% elif "van-hoc-nuoc-ngoai" in category|string|lower() %}
+    {% elif "sach-hoc-ngoai-ngu" in category|string|lower() %}
         {% set bg = "bg-cat-foreign" %}
     {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
         {% set bg = "bg-cat-children" %}
     {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
         {% set bg = "bg-cat-psychology" %}
-    {% elif "giao-khoa-tham-khao" in category|string|lower() or "textbook" in category|string|lower() %}
-        {% set bg = "bg-cat-education" %}
-    {% elif "manga-truyen-tranh" in category|string|lower() or "comic" in category|string|lower() %}
-        {% set bg = "bg-cat-manga" %}
-    {% elif "sach-teen" in category|string|lower() %}
-        {% set bg = "bg-cat-teen" %}
     {% endif %}
-    
     {{ bg }}
 {%- endmacro %}
 
@@ -77,18 +58,12 @@
         {% set name = "Kinh Tế - Chính Trị" %}
     {% elif "van-hoc-trong-nuoc" in category|string|lower() %}
         {% set name = "Văn Học Trong Nước" %}
-    {% elif "van-hoc-nuoc-ngoai" in category|string|lower() %}
+    {% elif "sach-hoc-ngoai-ngu" in category|string|lower() %}
         {% set name = "Văn Học Nước Ngoài" %}
     {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
         {% set name = "Sách Thiếu Nhi" %}
     {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
         {% set name = "Tâm Lý - Kỹ Năng Sống" %}
-    {% elif "giao-khoa-tham-khao" in category|string|lower() or "textbook" in category|string|lower() %}
-        {% set name = "Giáo Khoa - Tham Khảo" %}
-    {% elif "manga-truyen-tranh" in category|string|lower() or "comic" in category|string|lower() %}
-        {% set name = "Manga - Truyện Tranh" %}
-    {% elif "sach-teen" in category|string|lower() %}
-        {% set name = "Sách Teen" %}
     {% endif %}
     
     {{ name }}
