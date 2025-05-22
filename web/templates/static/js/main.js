@@ -12,6 +12,7 @@ function initApp() {
     // Core functionality
     initTooltips();
     setupBackToTop();
+    setupHeaderScroll();
     
     // Page-specific functionality
     setupBookCards();
@@ -50,6 +51,39 @@ function setupBackToTop() {
             top: 0,
             behavior: 'smooth'
         });
+    });
+}
+
+/**
+ * Setup header scroll behavior
+ */
+function setupHeaderScroll() {
+    const header = document.querySelector('.main-header');
+    if (!header) return;
+    
+    let lastScroll = 0;
+    const scrollThreshold = 50; // Ngưỡng scroll để kích hoạt hiệu ứng
+    
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        // Thêm class khi scroll xuống
+        if (currentScroll > scrollThreshold) {
+            header.classList.add('header-scrolled');
+        } else {
+            header.classList.remove('header-scrolled');
+        }
+        
+        // Ẩn/hiện header dựa trên hướng scroll
+        if (currentScroll > lastScroll && currentScroll > 100) {
+            // Scroll xuống
+            header.classList.add('header-hidden');
+        } else {
+            // Scroll lên
+            header.classList.remove('header-hidden');
+        }
+        
+        lastScroll = currentScroll;
     });
 }
 
@@ -154,13 +188,19 @@ function setupPagination() {
     const searchResults = document.getElementById('search-results');
     if (!searchResults) return;
     
-    searchResults.addEventListener('click', function(e) {
+    let isLoading = false;
+    
+    searchResults.addEventListener('click', async function(e) {
         const paginationLink = e.target.closest('.pagination a');
-        if (!paginationLink) return;
+        if (!paginationLink || isLoading) return;
         
         e.preventDefault();
         
+        // Prevent multiple clicks while loading
+        isLoading = true;
+        
         // Show loading state
+        const originalContent = searchResults.innerHTML;
         searchResults.innerHTML = `
             <div class="text-center py-5">
                 <div class="spinner-border text-primary" role="status">
@@ -170,22 +210,30 @@ function setupPagination() {
             </div>
         `;
         
-        // Update URL
-        const url = paginationLink.href;
-        window.history.pushState({}, '', url);
-        
-        // Fetch content
-        fetch(url, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Lỗi khi tải dữ liệu');
-            return response.text();
-        })
-        .then(html => {
+        try {
+            // Update URL
+            const url = paginationLink.href;
+            window.history.pushState({}, '', url);
+            
+            // Fetch content
+            const response = await fetch(url, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const html = await response.text();
             searchResults.innerHTML = html;
-        })
-        .catch(error => {
+            
+            // Reinitialize book card events for the new content
+            setupBookCards();
+            
+            // Scroll to top of results
+            searchResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+        } catch (error) {
             console.error('Lỗi:', error);
             searchResults.innerHTML = `
                 <div class="alert alert-danger">
@@ -194,7 +242,16 @@ function setupPagination() {
                 </div>
             `;
             showErrorToast("Đã xảy ra lỗi khi tải trang. Vui lòng thử lại.");
-        });
+            
+            // Restore original content after a delay
+            setTimeout(() => {
+                searchResults.innerHTML = originalContent;
+                // Reinitialize book card events for restored content
+                setupBookCards();
+            }, 3000);
+        } finally {
+            isLoading = false;
+        }
     });
 }
 

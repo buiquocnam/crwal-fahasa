@@ -33,20 +33,20 @@
     {% if total_pages > 1 %}
     <nav aria-label="Page navigation" class="mt-5">
         <ul class="pagination justify-content-center">
-            {# Tạo URL cơ bản đơn giản #}
-            {% set base_url = "/search?" %}
+            {# Tạo URL cơ bản với các tham số #}
+            {% set params = [] %}
             {% if keyword %}
-                {% set base_url = base_url + "keyword=" + keyword + "&search_type=" + search_type %}
-                {% if category %}
-                    {% set base_url = base_url + "&category=" + category %}
-                {% endif %}
-            {% elif category %}
-                {% set base_url = base_url + "category=" + category %}
+                {% set _ = params.append('keyword=' + keyword) %}
+                {% set _ = params.append('search_type=' + search_type) %}
             {% endif %}
+            {% if category %}
+                {% set _ = params.append('category=' + category) %}
+            {% endif %}
+            {% set base_url = "/search?" + params|join('&') if params else "/search?" %}
             
             {# Nút trang trước #}
             <li class="page-item {{ 'disabled' if page == 1 else '' }}">
-                <a class="page-link" href="{{ base_url }}{{ '&' if keyword or category else '' }}page={{ page - 1 if page > 1 else 1 }}">
+                <a class="page-link" href="{{ base_url }}{{ '&' if params else '' }}page={{ page - 1 if page > 1 else 1 }}">
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             </li>
@@ -57,13 +57,13 @@
             
             {% for p in range(start_page, end_page + 1) %}
             <li class="page-item {{ 'active' if p == page else '' }}">
-                <a class="page-link" href="{{ base_url }}{{ '&' if keyword or category else '' }}page={{ p }}">{{ p }}</a>
+                <a class="page-link" href="{{ base_url }}{{ '&' if params else '' }}page={{ p }}">{{ p }}</a>
             </li>
             {% endfor %}
             
             {# Nút trang sau #}
             <li class="page-item {{ 'disabled' if page == total_pages else '' }}">
-                <a class="page-link" href="{{ base_url }}{{ '&' if keyword or category else '' }}page={{ page + 1 if page < total_pages else total_pages }}">
+                <a class="page-link" href="{{ base_url }}{{ '&' if params else '' }}page={{ page + 1 if page < total_pages else total_pages }}">
                     <span aria-hidden="true">&raquo;</span>
                 </a>
             </li>

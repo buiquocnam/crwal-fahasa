@@ -53,12 +53,12 @@ def load_config():
         raise FileNotFoundError(f"Không tìm thấy file cấu hình tại {CONFIG_FILE_PATH}")
     
     # Ghi đè một số giá trị từ .env nếu có
-    CONFIG['OUTPUT_DIR'] = os.getenv('OUTPUT_DIR', CONFIG.get('OUTPUT_DIR', '/app/data'))
-    CONFIG['MAX_PAGES'] = int(os.getenv('MAX_PAGES', CONFIG.get('MAX_PAGES', 1)))
-    CONFIG['SCHEDULED_CRAWLING'] = os.getenv('SCHEDULED_CRAWLING', str(CONFIG.get('SCHEDULED_CRAWLING', 'false'))).lower() == 'true'
-    CONFIG['SCHEDULE_TIME'] = os.getenv('SCHEDULE_TIME', CONFIG.get('SCHEDULE_TIME', '01:00'))
-    CONFIG['CREATE_BACKUP_BEFORE_DELETE'] = os.getenv('CREATE_BACKUP_BEFORE_DELETE', str(CONFIG.get('CREATE_BACKUP_BEFORE_DELETE', 'false'))).lower() == 'true'
-    CONFIG['INGESTION_CALLBACK_URL'] = os.getenv('INGESTION_CALLBACK_URL', CONFIG.get('INGESTION_CALLBACK_URL', ''))
+    CONFIG['OUTPUT_DIR'] = os.getenv('OUTPUT_DIR')
+    CONFIG['MAX_PAGES'] = int(os.getenv('MAX_PAGES'))
+    CONFIG['SCHEDULED_CRAWLING'] = os.getenv('SCHEDULED_CRAWLING')
+    CONFIG['SCHEDULE_TIME'] = os.getenv('SCHEDULE_TIME')
+    CONFIG['CREATE_BACKUP_BEFORE_DELETE'] = os.getenv('CREATE_BACKUP_BEFORE_DELETE').lower() == 'true'
+    CONFIG['INGESTION_CALLBACK_URL'] = os.getenv('INGESTION_CALLBACK_URL')
 
     # Tạo output_files cho từng danh mục
     CONFIG['CATEGORY_OUTPUT_FILES'] = {}
