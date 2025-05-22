@@ -20,6 +20,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Crawler API",
+    description="API để crawl dữ liệu từ website Fahasa",
+    version="1.0.0",
+    lifespan=lifespan,
+    root_path="/crawler"
 )
 
 @app.get("/")
