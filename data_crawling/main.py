@@ -24,7 +24,6 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
     root_path="/crawler",
-    docs_url="/docs"
 )
 
 @app.get("/")

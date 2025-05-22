@@ -23,4 +23,4 @@ ENV PYTHONPATH=/app
 EXPOSE 8000
 
 # Run the application
-CMD ["python", "-m", "data_crawling.api"] 
+CMD ["uvicorn", "data_crawling.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
