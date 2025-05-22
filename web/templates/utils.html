@@ -43,7 +43,7 @@
         {% set bg = "bg-cat-literature" %}
     {% elif "sach-hoc-ngoai-ngu" in category|string|lower() %}
         {% set bg = "bg-cat-foreign" %}
-    {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
+    {% elif "nuoi-day-con" in category|string|lower() or "children" in category|string|lower() %}
         {% set bg = "bg-cat-children" %}
     {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
         {% set bg = "bg-cat-psychology" %}
@@ -60,8 +60,8 @@
         {% set name = "Văn Học Trong Nước" %}
     {% elif "sach-hoc-ngoai-ngu" in category|string|lower() %}
         {% set name = "Văn Học Nước Ngoài" %}
-    {% elif "thieu-nhi" in category|string|lower() or "children" in category|string|lower() %}
-        {% set name = "Sách Thiếu Nhi" %}
+    {% elif "nuoi-day-con" in category|string|lower() or "children" in category|string|lower() %}
+        {% set name = "Nuôi Dạy Con" %}
     {% elif "tam-ly-ky-nang-song" in category|string|lower() or "psychology" in category|string|lower() %}
         {% set name = "Tâm Lý - Kỹ Năng Sống" %}
     {% endif %}
